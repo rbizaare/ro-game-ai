@@ -17,6 +17,9 @@ rathena-master/
 .idea/
 .claude/
 
+# Logs
+logs.db
+
 # OS
 .DS_Store
 Thumbs.db

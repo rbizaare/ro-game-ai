@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from ai_helper import get_top_monsters_by_exp, ask_ai_hybrid
+from ai_helper import get_top_monsters_by_exp, ask_ai_hybrid, detect_intent
+from chat_logger import log_chat, get_logs as get_chat_logs
 import sqlite3
 DB_PATH = os.path.join(BASE_DIR, "game.db")
 
@@ -78,13 +79,23 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 def chat(req: ChatRequest):
-
+    intent = detect_intent(req.question)
     answer = ask_ai_hybrid(req.question)
-
+    log_chat(req.question, intent, answer)
     return {
         "question": req.question,
         "answer": answer
     }
+
+
+@app.get("/logs")
+def logs_page():
+    return FileResponse(os.path.join(BASE_DIR, "static", "logs.html"))
+
+
+@app.get("/api/logs")
+def api_logs(unanswered_only: bool = True, limit: int = 100):
+    return get_chat_logs(unanswered_only=unanswered_only, limit=limit)
 
 @app.get("/farm/{item_name}")
 def find_item_sources(item_name: str):
