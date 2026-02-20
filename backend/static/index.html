@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RO Game Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <h1>Ragnarok Online Assistant</h1>
+            <p class="subtitle">Ask me about monsters, items, drops, and farming</p>
+        </header>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-content">Welcome! Ask me anything about Ragnarok Online.
+
+Try these queries:
+  - "What is Poring?"
+  - "Where can I farm Jellopy?"
+  - "List daggers sorted by attack"
+  - "List cards that gives agi"
+  - "Compare Excalibur and Masamune"</div>
+            </div>
+        </div>
+
+        <form class="chat-input-area" id="chatForm">
+            <input
+                type="text"
+                id="chatInput"
+                placeholder="Ask about monsters, items, drops..."
+                autocomplete="off"
+                required
+            >
+            <button type="submit" id="sendBtn">Send</button>
+        </form>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
