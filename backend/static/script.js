@@ -70,3 +70,42 @@ input.addEventListener('keydown', (e) => {
         form.dispatchEvent(new Event('submit'));
     }
 });
+
+// Commands modal
+const commandsBtn = document.getElementById('commandsBtn');
+const commandsModal = document.getElementById('commandsModal');
+const modalClose = document.getElementById('modalClose');
+
+commandsBtn.addEventListener('click', () => {
+    commandsModal.classList.add('active');
+});
+
+modalClose.addEventListener('click', () => {
+    commandsModal.classList.remove('active');
+});
+
+// Close modal on overlay click
+commandsModal.addEventListener('click', (e) => {
+    if (e.target === commandsModal) {
+        commandsModal.classList.remove('active');
+    }
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        commandsModal.classList.remove('active');
+    }
+});
+
+// Click a command example to auto-fill input
+document.querySelectorAll('.cmd-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const query = item.getAttribute('data-query');
+        if (query) {
+            input.value = query;
+            commandsModal.classList.remove('active');
+            input.focus();
+        }
+    });
+});
