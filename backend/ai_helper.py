@@ -1264,6 +1264,10 @@ def detect_intent(question: str):
 def should_use_llm(question: str, intent: str) -> bool:
     q = question.lower()
 
+    # Always use LLM for compare — the deterministic output is raw data that needs analysis
+    if intent == "compare":
+        return True
+
     # Never use LLM for pure data responses
     if intent in [
         "farm",
@@ -1282,6 +1286,8 @@ def should_use_llm(question: str, intent: str) -> bool:
     # Use LLM for reasoning / comparison / advice
     if any(re.search(rf"\b{word}\b", q) for word in [
         "compare",
+        "vs",
+        "versus",
         "better",
         "best for",
         "recommend",
@@ -1299,7 +1305,8 @@ def should_use_llm(question: str, intent: str) -> bool:
 def enhance_with_llm(question: str, deterministic_answer: str) -> str:
 
     if not client:
-        return deterministic_answer  # No API key → fallback safely
+        print("LLM SKIPPED: No OPENAI_API_KEY configured")
+        return deterministic_answer + "\n\n(AI comparison unavailable — API key not configured)"
 
     prompt = f"""
 You are assisting a Ragnarok Online farming AI.
