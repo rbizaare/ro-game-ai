@@ -19,6 +19,9 @@ _UNANSWERED_PATTERNS = [
     "no valid filters",
     "no item data found",
     "no monster drops found",
+    "skill not found",
+    "no skills found",
+    "no data found for",
 ]
 
 

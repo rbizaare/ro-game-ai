@@ -18,6 +18,7 @@ ITEM_CACHE = None
 SUBTYPE_CACHE = None
 MONSTER_CACHE = None
 ARMOR_LOCATION_CACHE = None
+SKILL_CACHE = None
 
 sort_keywords = [
             "attack speed",
@@ -85,6 +86,69 @@ def load_armor_locations():
         ARMOR_LOCATION_CACHE = [row[0] for row in cur.fetchall() if row[0]]
         conn.close()
     return ARMOR_LOCATION_CACHE
+
+def load_skill_cache():
+    global SKILL_CACHE
+    if SKILL_CACHE is None:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT name, skid, job_class FROM skills")
+        SKILL_CACHE = cur.fetchall()
+        conn.close()
+    return SKILL_CACHE
+
+
+JOB_CLASS_ALIASES = {
+    "swordsman": "Swordsman", "swordie": "Swordsman",
+    "mage": "Mage",
+    "acolyte": "Acolyte", "aco": "Acolyte",
+    "merchant": "Merchant", "merch": "Merchant",
+    "archer": "Archer",
+    "thief": "Thief",
+    "knight": "Knight",
+    "priest": "Priest",
+    "wizard": "Wizard", "wiz": "Wizard",
+    "blacksmith": "Blacksmith",
+    "hunter": "Hunter",
+    "assassin": "Assassin", "sin": "Assassin",
+    "rogue": "Rogue",
+    "crusader": "Crusader", "crus": "Crusader",
+    "monk": "Monk",
+    "sage": "Sage",
+    "bard": "Bard",
+    "dancer": "Dancer",
+    "lord knight": "Lord Knight", "lk": "Lord Knight",
+    "high priest": "High Priest",
+    "high wizard": "High Wizard",
+    "whitesmith": "Whitesmith", "ws": "Whitesmith",
+    "sniper": "Sniper",
+    "assassin cross": "Assassin Cross", "sinx": "Assassin Cross",
+    "paladin": "Paladin",
+    "champion": "Champion", "champ": "Champion",
+    "professor": "Professor", "prof": "Professor",
+    "star gladiator": "Star Gladiator",
+    "soul linker": "Soul Linker",
+    "taekwon": "Taekwon",
+    "gunslinger": "Gunslinger",
+    "ninja": "Ninja",
+    "rune knight": "Rune Knight",
+    "guillotine cross": "Guillotine Cross",
+    "ranger": "Ranger",
+    "mechanic": "Mechanic",
+    "arch bishop": "Arch Bishop",
+    "warlock": "Warlock",
+    "sura": "Sura",
+    "sorcerer": "Sorcerer",
+    "geneticist": "Geneticist",
+    "minstrel": "Minstrel",
+    "wanderer": "Wanderer",
+    "royal guard": "Royal Guard",
+    "shadow chaser": "Shadow Chaser",
+    "rebellion": "Rebellion",
+    "kagerou": "Kagerou/Oboro", "oboro": "Kagerou/Oboro",
+    "alchemist": "Alchemist",
+    "novice": "Novice",
+}
 
 
 # ----------------------
@@ -387,6 +451,45 @@ def find_monster_from_question(question: str):
 
     matches.sort(key=len, reverse=True)
     return matches[0]
+
+
+def find_skill_from_question(question):
+    skills = load_skill_cache()
+    q = question.lower()
+
+    matches = []
+    for name, skid, job_class in skills:
+        if name and re.search(rf"\b{re.escape(name.lower())}\b", q):
+            matches.append((name, skid, job_class))
+
+    if not matches:
+        return None
+
+    # Longest match first to avoid partial collisions (e.g. "Bash" vs "Bowling Bash")
+    matches.sort(key=lambda x: len(x[0]), reverse=True)
+
+    # Remove short names that are substrings of longer matched names
+    filtered = []
+    for m in matches:
+        if not any(
+            m[0].lower() != other[0].lower()
+            and m[0].lower() in other[0].lower()
+            for other in matches
+        ):
+            filtered.append(m)
+    if filtered:
+        matches = filtered
+
+    return {"name": matches[0][0], "skid": matches[0][1], "job_class": matches[0][2]}
+
+
+def detect_job_class(question):
+    q = question.lower()
+    # Sort by length descending to match "lord knight" before "knight"
+    for alias in sorted(JOB_CLASS_ALIASES.keys(), key=len, reverse=True):
+        if re.search(rf"\b{re.escape(alias)}\b", q):
+            return JOB_CLASS_ALIASES[alias]
+    return None
 
 
 def find_item_sources_db(item):
@@ -1106,6 +1209,37 @@ def detect_intent(question: str):
 
     size_keywords = ["small", "medium", "large"]
 
+    # --- SKILL INTENTS (before item/monster to avoid collisions) ---
+    skill_match = find_skill_from_question(question)
+    job_match = detect_job_class(question)
+
+    # SKILL LIST: "list knight skills", "show mage skills"
+    if (
+        any(re.search(rf"\b{re.escape(t)}\b", q) for t in ["list", "show", "display", "what are"])
+        and re.search(r"\bskills?\b", q)
+        and job_match
+    ):
+        return "skill_list"
+
+    # SKILL REQUIREMENT: "requirement for bowling bash", "prereq for bash"
+    if (
+        any(re.search(rf"\b{re.escape(kw)}\b", q) for kw in [
+            "requirement", "requirements", "prereq", "prerequisite",
+            "prerequisites", "needed for",
+        ])
+        and skill_match
+    ):
+        return "skill_requirement"
+
+    # SKILL DETAIL: "describe bowling bash", "skill info heal"
+    if (
+        any(re.search(rf"\b{re.escape(kw)}\b", q) for kw in [
+            "describe", "skill info", "skill detail",
+        ])
+        and skill_match
+    ):
+        return "skill_detail"
+
     best_location_pattern = (
         r"\b(best map|best place|best spot|best location|best area|"
         r"where to farm|where to hunt|where to grind|where can i farm|"
@@ -1280,6 +1414,9 @@ def should_use_llm(question: str, intent: str) -> bool:
         "monster_list",
         "monster_location",
         "monster_detail",
+        "skill_detail",
+        "skill_list",
+        "skill_requirement",
     ]:
         return False
 
@@ -1360,6 +1497,108 @@ def ask_ai(question: str):
 
     intent = detect_intent(question)
     print("INTENT:", intent)
+
+    # ----------------------
+    # SKILL DETAIL
+    # ----------------------
+    if intent == "skill_detail":
+        skill = find_skill_from_question(question)
+        if not skill:
+            return "Skill not found."
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT name, max_level, skill_form, target, property,
+                   requirement, description, level_data, job_class
+            FROM skills
+            WHERE trim(lower(name)) = trim(lower(?))
+        """, (skill["name"],))
+        row = cur.fetchone()
+        conn.close()
+
+        if not row:
+            return f"No data found for {skill['name']}."
+
+        name, max_level, skill_form, target, prop, req, desc, level_data, job_class = row
+        output = [name]
+        output.append(f"  Class: {job_class}")
+        if max_level:
+            output.append(f"  Max Level: {max_level}")
+        if skill_form:
+            output.append(f"  Skill Form: {skill_form}")
+        if target:
+            output.append(f"  Target: {target}")
+        if prop:
+            output.append(f"  Property: {prop}")
+        if req:
+            output.append(f"  Requirement: {req}")
+        if desc:
+            output.append(f"  Description: {desc}")
+        if level_data:
+            output.append("")
+            output.append("Level Details:")
+            for lv_line in level_data.split("\n"):
+                output.append(f"  {lv_line}")
+
+        return "\n".join(output)
+
+    # ----------------------
+    # SKILL LIST
+    # ----------------------
+    if intent == "skill_list":
+        job = detect_job_class(question)
+        if not job:
+            return "Job class not recognized."
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT name, max_level, skill_form
+            FROM skills
+            WHERE trim(lower(job_class)) = trim(lower(?))
+            ORDER BY name
+        """, (job,))
+        rows = cur.fetchall()
+        conn.close()
+
+        if not rows:
+            return f"No skills found for {job}."
+
+        output = [f"{job} Skills ({len(rows)} total):\n"]
+        for name, max_level, skill_form in rows:
+            form_label = f" ({skill_form})" if skill_form else ""
+            lv_label = f" Lv{max_level}" if max_level else ""
+            output.append(f"  - {name}{lv_label}{form_label}")
+
+        return "\n".join(output)
+
+    # ----------------------
+    # SKILL REQUIREMENT
+    # ----------------------
+    if intent == "skill_requirement":
+        skill = find_skill_from_question(question)
+        if not skill:
+            return "Skill not found."
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT name, requirement, job_class
+            FROM skills
+            WHERE trim(lower(name)) = trim(lower(?))
+        """, (skill["name"],))
+        row = cur.fetchone()
+        conn.close()
+
+        if not row:
+            return f"No data found for {skill['name']}."
+
+        name, req, job_class = row
+        if not req:
+            return f"{name} ({job_class}) has no skill prerequisites."
+
+        return f"{name} ({job_class})\n  Requirements: {req}"
 
     # ----------------------
     # BEST MAP BY COMBINED FILTERS

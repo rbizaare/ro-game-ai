@@ -95,6 +95,23 @@ def create_tables(conn):
     """)
 
 
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS skills (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        skid TEXT UNIQUE,
+        prefix TEXT,
+        job_class TEXT,
+        name TEXT,
+        max_level INTEGER,
+        skill_form TEXT,
+        target TEXT,
+        property TEXT,
+        requirement TEXT,
+        description TEXT,
+        level_data TEXT
+    )
+    """)
+
     conn.commit()
 
 
@@ -279,6 +296,8 @@ def import_data():
 
     import_shops(conn)
 
+    import_skilldescript_lua(conn)
+
     conn.commit()
     conn.close()
 
@@ -413,6 +432,193 @@ def import_shops(conn):
     print(f"✅ Imported {shop_count} shops with {item_count} items.")
 
 
+SKID_PREFIX_TO_JOB = {
+    "NV": "Novice", "SM": "Swordsman", "MG": "Mage", "AL": "Acolyte",
+    "MC": "Merchant", "AC": "Archer", "TF": "Thief",
+    "KN": "Knight", "PR": "Priest", "WZ": "Wizard", "BS": "Blacksmith",
+    "HT": "Hunter", "AS": "Assassin", "RG": "Rogue", "CR": "Crusader",
+    "MO": "Monk", "SA": "Sage", "BA": "Bard", "DC": "Dancer",
+    "LK": "Lord Knight", "HP": "High Priest", "HW": "High Wizard",
+    "WS": "Whitesmith", "SN": "Sniper", "ASC": "Assassin Cross",
+    "PA": "Paladin", "CH": "Champion", "PF": "Professor",
+    "CG": "Clown/Gypsy", "BD": "Bard/Dancer Ensemble",
+    "SL": "Soul Linker", "ST": "Soul Linker",
+    "SG": "Star Gladiator", "TK": "Taekwon",
+    "GS": "Gunslinger", "NJ": "Ninja",
+    "RK": "Rune Knight", "GC": "Guillotine Cross", "RA": "Ranger",
+    "NC": "Mechanic", "WM": "Minstrel/Wanderer", "SO": "Sorcerer",
+    "GN": "Geneticist", "AB": "Arch Bishop", "WL": "Warlock",
+    "SR": "Sura", "MI": "Minstrel", "MA": "Ranger",
+    "LG": "Royal Guard", "SC": "Shadow Chaser",
+    "KO": "Kagerou/Oboro", "OB": "Kagerou/Oboro", "KG": "Kagerou/Oboro",
+    "RL": "Rebellion", "AM": "Alchemist",
+    "GD": "Guild", "ALL": "All Classes",
+    "HAMI": "Homunculus", "HFLI": "Homunculus",
+    "HLIF": "Homunculus", "HVAN": "Homunculus",
+    "MH": "Homunculus S", "MER": "Mercenary",
+    "ML": "Mercenary", "MS": "Mercenary", "MB": "Mercenary",
+    "DA": "Summoner", "EL": "Elemental",
+    "WA": "Wanderer",
+}
+
+SKIP_SKILL_PREFIXES = {
+    "GM", "NPC", "ITEM", "ITM", "CASH", "SKILL",
+    "RETURN", "XX", "FOLLOWER", "ECLAGE", "ECL", "WE", "DE",
+}
+
+
+def _strip_color(text):
+    return re.sub(r"\^[0-9A-Fa-f]{6}", "", text)
+
+
+def _process_skill_entry(cur, skid, lines):
+    parts = skid.split("_", 1)
+    prefix = parts[0]
+
+    if prefix in SKIP_SKILL_PREFIXES:
+        return False
+
+    job_class = SKID_PREFIX_TO_JOB.get(prefix, "Unknown")
+
+    # Strip color codes from all lines
+    lines = [_strip_color(l).strip() for l in lines]
+    lines = [l for l in lines if l]
+
+    if not lines:
+        return False
+
+    name = lines[0]
+    max_level = None
+    skill_form = None
+    target = None
+    prop = None
+    requirement_parts = []
+    description_parts = []
+    level_lines = []
+    in_description = False
+    in_requirement = False
+
+    for l in lines[1:]:
+        lv_match = re.match(r"MAX Lv\s*:\s*(\d+)", l)
+        if lv_match:
+            max_level = int(lv_match.group(1))
+            in_description = False
+            in_requirement = False
+            continue
+
+        form_match = re.search(r"Skill Form:\s*(.+)", l)
+        if form_match:
+            skill_form = form_match.group(1).strip()
+            in_description = False
+            in_requirement = False
+            continue
+
+        target_match = re.search(r"Target:\s*(.+)", l)
+        if target_match:
+            target = target_match.group(1).strip()
+            in_description = False
+            in_requirement = False
+            continue
+
+        prop_match = re.search(r"Property:\s*(.+)", l)
+        if prop_match:
+            prop = prop_match.group(1).strip()
+            in_description = False
+            in_requirement = False
+            continue
+
+        # Skill Requirement (may have leading digit like "2Skill Requirement")
+        req_match = re.search(r"(?:\d+)?Skill Requirement\s*:\s*(.+)", l)
+        if req_match:
+            requirement_parts.append(req_match.group(1).strip())
+            in_description = False
+            in_requirement = True
+            continue
+
+        # Level data
+        lv_data_match = re.match(r"\[Lv(?:el)?\s*\d+\]\s*:?\s*(.*)", l)
+        if lv_data_match:
+            level_lines.append(l)
+            in_description = False
+            in_requirement = False
+            continue
+
+        desc_match = re.search(r"Description:\s*(.+)", l)
+        if desc_match:
+            description_parts = [desc_match.group(1).strip()]
+            in_description = True
+            in_requirement = False
+            continue
+
+        # Continuation lines
+        if in_requirement:
+            requirement_parts.append(l)
+        elif in_description:
+            description_parts.append(l)
+
+    requirement = " ".join(requirement_parts).rstrip(",").strip() if requirement_parts else None
+    # Clean up double spaces and trailing commas from multi-line requirements
+    if requirement:
+        requirement = re.sub(r"\s+", " ", requirement).rstrip(",").strip()
+    description = " ".join(description_parts) if description_parts else None
+    level_data = "\n".join(level_lines) if level_lines else None
+
+    cur.execute("""
+        INSERT OR REPLACE INTO skills
+        (skid, prefix, job_class, name, max_level, skill_form,
+         target, property, requirement, description, level_data)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (skid, prefix, job_class, name, max_level, skill_form,
+          target, prop, requirement, description, level_data))
+    return True
+
+
+def import_skilldescript_lua(conn):
+    cur = conn.cursor()
+    lua_path = Path("../data/skilldescript.lua")
+
+    if not lua_path.exists():
+        print("skilldescript.lua not found.")
+        return
+
+    print("Importing skills from skilldescript.lua...")
+
+    count = 0
+    current_skid = None
+    current_lines = []
+
+    with open(lua_path, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            entry_match = re.match(r'\s*\[SKID\.(\w+)\]\s*=\s*\{', line)
+            if entry_match:
+                if current_skid and current_lines:
+                    if _process_skill_entry(cur, current_skid, current_lines):
+                        count += 1
+                current_skid = entry_match.group(1)
+                current_lines = []
+                continue
+
+            if re.match(r'\s*\},?\s*$', line) and current_skid:
+                if current_lines:
+                    if _process_skill_entry(cur, current_skid, current_lines):
+                        count += 1
+                current_skid = None
+                current_lines = []
+                continue
+
+            if current_skid:
+                text_matches = re.findall(r'"(.*?)"', line)
+                current_lines.extend(text_matches)
+
+    # Handle last entry
+    if current_skid and current_lines:
+        if _process_skill_entry(cur, current_skid, current_lines):
+            count += 1
+
+    conn.commit()
+    print(f"Imported {count} skills from skilldescript.lua.")
+
+
 if __name__ == "__main__":
     import_data()
-    print("✅ Monster database imported successfully!")
+    print("Monster database imported successfully!")
