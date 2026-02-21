@@ -1231,6 +1231,17 @@ def detect_intent(question: str):
     ):
         return "skill_requirement"
 
+    # SKILL SEARCH: "which skill affects stun", "skills that mention fire"
+    if (
+        re.search(r"\bskills?\b", q)
+        and any(re.search(rf"\b{re.escape(kw)}\b", q) for kw in [
+            "affects", "affect", "about", "mention", "related to",
+            "involve", "with", "that has", "that have",
+        ])
+        and not job_match
+    ):
+        return "skill_search"
+
     # SKILL DETAIL: "describe bowling bash", "skill info heal"
     if (
         any(re.search(rf"\b{re.escape(kw)}\b", q) for kw in [
@@ -1417,6 +1428,7 @@ def should_use_llm(question: str, intent: str) -> bool:
         "skill_detail",
         "skill_list",
         "skill_requirement",
+        "skill_search",
     ]:
         return False
 
@@ -1599,6 +1611,55 @@ def ask_ai(question: str):
             return f"{name} ({job_class}) has no skill prerequisites."
 
         return f"{name} ({job_class})\n  Requirements: {req}"
+
+    # ----------------------
+    # SKILL SEARCH
+    # ----------------------
+    if intent == "skill_search":
+        q = question.lower()
+
+        # Extract the search keyword: everything after the trigger word
+        search_term = None
+        for pattern in [
+            r"\baffects?\s+(.+)",
+            r"\babout\s+(.+)",
+            r"\bmention\s+(.+)",
+            r"\brelated to\s+(.+)",
+            r"\binvolve\s+(.+)",
+            r"\bwith\s+(.+)",
+            r"\bthat (?:has|have)\s+(.+)",
+        ]:
+            m = re.search(pattern, q)
+            if m:
+                search_term = m.group(1).strip().rstrip("?").strip()
+                break
+
+        if not search_term:
+            return "Please specify what to search for, e.g. 'Which skill affects stun?'"
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT name, job_class, skill_form, description
+            FROM skills
+            WHERE lower(description) LIKE ?
+               OR lower(level_data) LIKE ?
+               OR lower(name) LIKE ?
+            ORDER BY job_class, name
+            LIMIT 25
+        """, (f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
+        rows = cur.fetchall()
+        conn.close()
+
+        if not rows:
+            return f"No skills found related to '{search_term}'."
+
+        output = [f"Skills related to '{search_term}' ({len(rows)} found):\n"]
+        for name, job_class, skill_form, desc in rows:
+            form_label = f" ({skill_form})" if skill_form else ""
+            output.append(f"  - {name} [{job_class}]{form_label}")
+
+        return "\n".join(output)
 
     # ----------------------
     # BEST MAP BY COMBINED FILTERS
