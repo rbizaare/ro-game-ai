@@ -1788,6 +1788,18 @@ def ask_ai(question: str):
         # Remove duplicates
         items = list(dict.fromkeys(items))
 
+        # Remove short names that are substrings of longer matched names
+        # e.g. if both "Bow" and "Gakkung Bow" matched, keep only "Gakkung Bow"
+        filtered = []
+        for item in items:
+            if not any(
+                item.lower() != other.lower()
+                and item.lower() in other.lower()
+                for other in items
+            ):
+                filtered.append(item)
+        items = filtered
+
         if len(items) >= 2:
             data = []
             for item_name in items[:2]:
