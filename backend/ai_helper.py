@@ -1661,7 +1661,10 @@ def ask_ai(question: str):
                 jobs, description
             ) = row
 
-            output.append(f"{name} [{slots}]")
+            if type_ and type_.lower() in ("weapon", "armor"):
+                output.append(f"{name} [{slots}]")
+            else:
+                output.append(f"{name}")
             output.append(f"Type: {type_}")
 
             if type_ and type_.lower() == "weapon" and subtype:
