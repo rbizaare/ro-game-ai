@@ -19,6 +19,7 @@ SUBTYPE_CACHE = None
 MONSTER_CACHE = None
 ARMOR_LOCATION_CACHE = None
 SKILL_CACHE = None
+HEADGEAR_QUEST_CACHE = None
 
 sort_keywords = [
             "attack speed",
@@ -96,6 +97,47 @@ def load_skill_cache():
         SKILL_CACHE = cur.fetchall()
         conn.close()
     return SKILL_CACHE
+
+
+def load_headgear_quest_cache():
+    global HEADGEAR_QUEST_CACHE
+    if HEADGEAR_QUEST_CACHE is None:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT item_name FROM headgear_quests")
+        HEADGEAR_QUEST_CACHE = [row[0] for row in cur.fetchall()]
+        conn.close()
+    return HEADGEAR_QUEST_CACHE
+
+
+def find_headgear_quest_from_question(question):
+    names = load_headgear_quest_cache()
+    q = question.lower()
+
+    matches = []
+    for name in names:
+        if name and re.search(rf"\b{re.escape(name.lower())}\b", q):
+            matches.append(name)
+
+    if not matches:
+        return None
+
+    # Longest match first
+    matches.sort(key=len, reverse=True)
+
+    # Remove short names that are substrings of longer matched names
+    filtered = []
+    for m in matches:
+        if not any(
+            m.lower() != other.lower()
+            and m.lower() in other.lower()
+            for other in matches
+        ):
+            filtered.append(m)
+    if filtered:
+        matches = filtered
+
+    return matches[0]
 
 
 JOB_CLASS_ALIASES = {
@@ -1209,6 +1251,16 @@ def detect_intent(question: str):
 
     size_keywords = ["small", "medium", "large"]
 
+    # --- HEADGEAR QUEST INTENT ---
+    if any(re.search(rf"\b{re.escape(kw)}\b", q) for kw in [
+        "ingredients", "ingredient", "recipe", "how to make",
+        "how to craft", "craft", "quest for", "materials for",
+        "requirements for",
+    ]):
+        hq_match = find_headgear_quest_from_question(question)
+        if hq_match:
+            return "headgear_quest"
+
     # --- SKILL INTENTS (before item/monster to avoid collisions) ---
     skill_match = find_skill_from_question(question)
     job_match = detect_job_class(question)
@@ -1429,6 +1481,7 @@ def should_use_llm(question: str, intent: str) -> bool:
         "skill_list",
         "skill_requirement",
         "skill_search",
+        "headgear_quest",
     ]:
         return False
 
@@ -1509,6 +1562,62 @@ def ask_ai(question: str):
 
     intent = detect_intent(question)
     print("INTENT:", intent)
+
+    # ----------------------
+    # HEADGEAR QUEST
+    # ----------------------
+    if intent == "headgear_quest":
+        hq_name = find_headgear_quest_from_question(question)
+        if not hq_name:
+            return "Headgear quest not found."
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT item_name, slots, ingredients, zeny,
+                   npc_name, map_name, map_x, map_y, location_desc, notes
+            FROM headgear_quests
+            WHERE trim(lower(item_name)) = trim(lower(?))
+        """, (hq_name,))
+        row = cur.fetchone()
+        conn.close()
+
+        if not row:
+            return f"No headgear quest found for '{hq_name}'."
+
+        name, slots, ingredients, zeny, npc, map_name, map_x, map_y, loc_desc, notes = row
+
+        output = []
+        slot_label = f" [{slots}]" if slots and slots > 0 else ""
+        output.append(f"Product: {name}{slot_label}")
+
+        if ingredients:
+            output.append("Ingredients:")
+            for line in ingredients.split("\n"):
+                output.append(f"  - {line}")
+
+        if zeny and zeny > 0:
+            output.append(f"Zeny: {zeny:,}")
+
+        if npc:
+            output.append(f"NPC: {npc}")
+
+        loc_parts = []
+        if loc_desc:
+            loc_parts.append(loc_desc)
+        if map_name:
+            coord = f"{map_name}"
+            if map_x is not None and map_y is not None:
+                coord += f",{map_x},{map_y}"
+            loc_parts.append(coord)
+
+        if loc_parts:
+            output.append(f"Location: {', '.join(loc_parts)}")
+
+        if notes:
+            output.append(f"Note: {notes}")
+
+        return "\n".join(output)
 
     # ----------------------
     # SKILL DETAIL

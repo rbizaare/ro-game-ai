@@ -96,6 +96,23 @@ def create_tables(conn):
 
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS headgear_quests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_id INTEGER,
+        item_name TEXT,
+        slots INTEGER DEFAULT 0,
+        ingredients TEXT,
+        zeny INTEGER DEFAULT 0,
+        npc_name TEXT,
+        map_name TEXT,
+        map_x INTEGER,
+        map_y INTEGER,
+        location_desc TEXT,
+        notes TEXT
+    )
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS skills (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         skid TEXT UNIQUE,
@@ -298,6 +315,8 @@ def import_data():
 
     import_skilldescript_lua(conn)
 
+    import_headgear_quests(conn)
+
     conn.commit()
     conn.close()
 
@@ -430,6 +449,155 @@ def import_shops(conn):
 
     conn.commit()
     print(f"✅ Imported {shop_count} shops with {item_count} items.")
+
+
+def import_headgear_quests(conn):
+    cur = conn.cursor()
+    quest_path = Path("../data/headgearquest.txt")
+
+    if not quest_path.exists():
+        print("headgearquest.txt not found.")
+        return
+
+    print("Importing headgear quests from headgearquest.txt...")
+
+    with open(quest_path, "r", encoding="utf-8", errors="ignore") as f:
+        content = f.read()
+
+    # Split into entries by |- separator
+    raw_entries = re.split(r"\|\-\s*\n\|?\s*\n?", content)
+
+    count = 0
+
+    for entry in raw_entries:
+        entry = entry.strip()
+        if not entry:
+            continue
+
+        # --- Product name ---
+        product_match = re.search(
+            r"\{\{Item List\s*\|\s*id=(\d+)\s*\|\s*(?:num=\d+\s*\|\s*)?item=([^|}]+?)(?:\s*\|\s*slots=(\d+))?\s*\}\}",
+            entry,
+        )
+        if not product_match:
+            continue
+
+        item_id = int(product_match.group(1))
+        item_name = product_match.group(2).strip()
+        slots = int(product_match.group(3)) if product_match.group(3) else 0
+
+        # --- Ingredients ---
+        ingredients = []
+        # Find all ingredient items (have num= field), skip the product itself
+        ingredient_matches = re.finditer(
+            r"\{\{Item List\s*\|\s*id=(\d+)\s*\|\s*num=([\d,]+)\s*\|\s*item=([^|}]+?)(?:\s*\|\s*(?:slots|card)=[^|}]*)?\s*\}\}",
+            entry,
+        )
+        for m in ingredient_matches:
+            ing_id = int(m.group(1))
+            if ing_id == item_id:
+                continue
+            num = m.group(2).replace(",", "")
+            ing_name = m.group(3).strip()
+            # Clean slot notation like "Axe [4]" or "Circlet [1]"
+            ingredients.append(f"{ing_name} x{num}")
+
+        # Kill requirements
+        kill_matches = re.finditer(
+            r"(\d+)\s*\{\{Monster\s*\|\s*id=\d+\s+([^}]+)\}\}",
+            entry,
+        )
+        for m in kill_matches:
+            kill_count = m.group(1)
+            monster_name = m.group(2).strip()
+            ingredients.append(f"Kill {monster_name} x{kill_count}")
+
+        ingredients_text = "\n".join(ingredients) if ingredients else None
+
+        # --- Zeny ---
+        zeny = 0
+        zeny_match = re.search(r"Zeny:\s*([\d,]+)", entry)
+        if zeny_match:
+            zeny = int(zeny_match.group(1).replace(",", ""))
+
+        # --- NPC and Location ---
+        npc_name = None
+        map_name = None
+        map_x = None
+        map_y = None
+        location_desc = None
+
+        # Split entry by || to find the location section (contains navi/coordinates)
+        sections = entry.split("||")
+        loc_section = None
+        for sec in sections:
+            if "navi|" in sec or re.search(r"\(\w+\s+\d+,\s*\d+\)", sec):
+                loc_section = sec
+                break
+
+        if loc_section:
+            # NPC name from blue span in location section
+            npc_match = re.search(
+                r'<span style="color:\s*blue">([^<]+)</span>',
+                loc_section,
+            )
+            if npc_match:
+                npc_name = npc_match.group(1).strip()
+
+            # Location: {{navi|map|x|y}} format
+            navi_match = re.search(r"\{\{navi\|([^|]+)\|(\d+)\|(\d+)\}\}", loc_section)
+            if navi_match:
+                map_name = navi_match.group(1).strip()
+                map_x = int(navi_match.group(2))
+                map_y = int(navi_match.group(3))
+            else:
+                # Fallback: (map x, y) or (map_name x, y) format
+                coord_match = re.search(r"\((\w+)\s+(\d+),\s*(\d+)\)", loc_section)
+                if coord_match:
+                    map_name = coord_match.group(1).strip()
+                    map_x = int(coord_match.group(2))
+                    map_y = int(coord_match.group(3))
+
+            # Location description: text after NPC span <br>
+            loc_match = re.search(
+                r'<span style="color:\s*blue">[^<]+</span><br>(.+?)(?:\s*$)',
+                loc_section,
+                re.DOTALL,
+            )
+            if loc_match:
+                location_desc = loc_match.group(1).strip()
+                location_desc = re.sub(r"<[^>]+>", "", location_desc).strip()
+                location_desc = re.sub(r"\{\{.*?\}\}", "", location_desc).strip()
+
+        # --- Notes ---
+        notes = None
+        # "Not repeatable" flag
+        if "Not repeatable" in entry:
+            notes = "Not repeatable"
+        # Note text
+        note_match = re.search(r"'''Note''':\s*(.+?)(?:\n|$)", entry)
+        if note_match:
+            note_text = re.sub(r"\{\{[^}]*\}\}", "", note_match.group(1)).strip()
+            note_text = re.sub(r"<[^>]+>", "", note_text).strip()
+            if notes:
+                notes += "; " + note_text
+            else:
+                notes = note_text
+
+        if not ingredients_text and zeny == 0:
+            continue
+
+        cur.execute("""
+            INSERT INTO headgear_quests
+            (item_id, item_name, slots, ingredients, zeny,
+             npc_name, map_name, map_x, map_y, location_desc, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (item_id, item_name, slots, ingredients_text, zeny,
+              npc_name, map_name, map_x, map_y, location_desc, notes))
+        count += 1
+
+    conn.commit()
+    print(f"Imported {count} headgear quests.")
 
 
 SKID_PREFIX_TO_JOB = {

@@ -22,6 +22,8 @@ _UNANSWERED_PATTERNS = [
     "skill not found",
     "no skills found",
     "no data found for",
+    "headgear quest not found",
+    "no headgear quest found",
 ]
 
 
