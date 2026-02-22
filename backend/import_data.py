@@ -317,6 +317,8 @@ def import_data():
 
     import_headgear_quests(conn)
 
+    import_item_mixing_files(conn)
+
     conn.commit()
     conn.close()
 
@@ -453,7 +455,7 @@ def import_shops(conn):
 
 def import_headgear_quests(conn):
     cur = conn.cursor()
-    quest_path = Path("../data/headgearquest.txt")
+    quest_path = Path("../data/item_mixing/headgears.txt")
 
     if not quest_path.exists():
         print("headgearquest.txt not found.")
@@ -598,6 +600,186 @@ def import_headgear_quests(conn):
 
     conn.commit()
     print(f"Imported {count} headgear quests.")
+
+
+def import_item_mixing_files(conn):
+    cur = conn.cursor()
+    base_path = Path("../data/item_mixing")
+
+    if not base_path.exists():
+        print("item_mixing folder not found.")
+        return
+
+    total = 0
+
+    # --- Juices ---
+    juice_path = base_path / "juices.txt"
+    if juice_path.exists():
+        with open(juice_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+        # Split by blank lines
+        entries = re.split(r"\n\s*\n", content)
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+
+            # Product: {{Item_List |id=531 |item=Apple Juice}}
+            prod = re.search(
+                r"\{\{Item[_ ]List\s*\|\s*id=(\d+)\s*\|\s*item=([^|}]+)\}\}",
+                entry,
+            )
+            if not prod:
+                continue
+
+            item_id = int(prod.group(1))
+            item_name = prod.group(2).strip()
+
+            # Ingredients (items with num=)
+            ingredients = []
+            for m in re.finditer(
+                r"\{\{Item[_ ]List\s*\|\s*id=(\d+)\s*\|\s*num=([\d,]+)\s*\|\s*item=([^|}]+)\}\}",
+                entry,
+            ):
+                ing_id = int(m.group(1))
+                if ing_id == item_id:
+                    continue
+                num = m.group(2).replace(",", "")
+                ingredients.append(f"{m.group(3).strip()} x{num}")
+
+            ingredients_text = "\n".join(ingredients) if ingredients else None
+
+            # Zeny (inline like "3 Zeny")
+            zeny = 0
+            zeny_match = re.search(r"(\d[\d,]*)\s*Zeny", entry)
+            if zeny_match:
+                zeny = int(zeny_match.group(1).replace(",", ""))
+
+            # NPC: <font color=blue>Name</font>
+            npc_name = None
+            npc_match = re.search(r"<font color=blue>([^<]+)</font>", entry)
+            if npc_match:
+                npc_name = npc_match.group(1).strip()
+
+            # Location: (map x,y)
+            map_name = None
+            map_x = None
+            map_y = None
+            location_desc = None
+            coord_match = re.search(r"\((\w+)\s+(\d+),\s*(\d+)\)", entry)
+            if coord_match:
+                map_name = coord_match.group(1).strip()
+                map_x = int(coord_match.group(2))
+                map_y = int(coord_match.group(3))
+
+            # Location desc from <br> text
+            loc_match = re.search(r"<font color=blue>[^<]+</font>\s*<br>\s*(.+?)\s*<br>", entry)
+            if loc_match:
+                location_desc = loc_match.group(1).strip()
+
+            cur.execute("""
+                INSERT INTO headgear_quests
+                (item_id, item_name, slots, ingredients, zeny,
+                 npc_name, map_name, map_x, map_y, location_desc, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (item_id, item_name, 0, ingredients_text, zeny,
+                  npc_name, map_name, map_x, map_y, location_desc, None))
+            total += 1
+
+    # --- Dyestuffs and Counteragent/Mixture ---
+    for filename in ["dyestuffs.txt", "counteragentmixture.txt"]:
+        file_path = base_path / filename
+        if not file_path.exists():
+            continue
+
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+        # Split by |-
+        raw_entries = re.split(r"\|\-", content)
+        for entry in raw_entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+
+            # Product: {{Item List |id=975 |item=Scarlet Dyestuffs}}
+            prod = re.search(
+                r"\{\{Item\s*List\s*\|\s*id=(\d+)\s*\|\s*item=([^|}]+)\}\}",
+                entry,
+            )
+            if not prod:
+                continue
+
+            item_id = int(prod.group(1))
+            item_name = prod.group(2).strip()
+
+            # Ingredients (items with num=) - note: field order may vary (item before num)
+            ingredients = []
+            for m in re.finditer(
+                r"\{\{Item\s*List\s*\|\s*id=(\d+)\s*\|"
+                r"\s*(?:item=([^|}]+?)\s*\|\s*num=([\d,]+)"
+                r"|num=([\d,]+)\s*\|\s*item=([^|}]+?))"
+                r"(?:\s*\|[^}]*)?\s*\}\}",
+                entry,
+            ):
+                ing_id = int(m.group(1))
+                if ing_id == item_id:
+                    continue
+                # Handle both field orders
+                if m.group(2):
+                    ing_name = m.group(2).strip()
+                    num = m.group(3).replace(",", "")
+                else:
+                    ing_name = m.group(5).strip()
+                    num = m.group(4).replace(",", "")
+                ingredients.append(f"{ing_name} x{num}")
+
+            ingredients_text = "\n".join(ingredients) if ingredients else None
+
+            # Zeny (inline like "3,000 Zeny")
+            zeny = 0
+            zeny_match = re.search(r"(\d[\d,]*)\s*Zeny", entry)
+            if zeny_match:
+                zeny = int(zeny_match.group(1).replace(",", ""))
+
+            # NPC name: text before <br/> in the location cell
+            npc_name = None
+            # Pattern: |...| NPC_NAME<br/>
+            npc_match = re.search(r"\|\s*(?:rowspan[^|]*\|)?\s*([A-Z][^<\n|]+?)\s*<br", entry)
+            if npc_match:
+                npc_name = npc_match.group(1).strip()
+
+            # Location desc: Inside [[City]]
+            location_desc = None
+            loc_match = re.search(r"Inside\s*\[\[([^\]]+)\]\]", entry)
+            if loc_match:
+                location_desc = f"Inside {loc_match.group(1)}"
+
+            # Coordinates: {{navi|map|x|y}}
+            map_name = None
+            map_x = None
+            map_y = None
+            navi_match = re.search(r"\{\{navi\|([^|]+)\|(\d+)\|(\d+)\}\}", entry)
+            if navi_match:
+                map_name = navi_match.group(1).strip()
+                map_x = int(navi_match.group(2))
+                map_y = int(navi_match.group(3))
+
+            if not ingredients_text and zeny == 0:
+                continue
+
+            cur.execute("""
+                INSERT INTO headgear_quests
+                (item_id, item_name, slots, ingredients, zeny,
+                 npc_name, map_name, map_x, map_y, location_desc, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (item_id, item_name, 0, ingredients_text, zeny,
+                  npc_name, map_name, map_x, map_y, location_desc, None))
+            total += 1
+
+    conn.commit()
+    print(f"Imported {total} item mixing recipes.")
 
 
 SKID_PREFIX_TO_JOB = {
