@@ -133,9 +133,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const onlineStreamers = STREAMERS.filter(s => s.isOnline);
         if (onlineStreamers.length > 0) {
             streamsGrid.innerHTML = onlineStreamers.map(renderStreamCard).join('');
+            initCarousel(streamsGrid);
         } else {
             streamsGrid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
         }
+    }
+
+    /* Carousel scroll buttons */
+    function initCarousel(track) {
+        const prevBtn = document.getElementById('streamsPrev');
+        const nextBtn = document.getElementById('streamsNext');
+        if (!prevBtn || !nextBtn) return;
+
+        const scrollAmount = 340;
+
+        function updateButtons() {
+            prevBtn.disabled = track.scrollLeft <= 0;
+            nextBtn.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+
+        nextBtn.addEventListener('click', () => {
+            track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+
+        track.addEventListener('scroll', updateButtons);
+        updateButtons();
     }
 
     if (streamersGrid) {
