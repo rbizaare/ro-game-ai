@@ -28,6 +28,11 @@ def root():
     return FileResponse(os.path.join(BASE_DIR, "static", "index.html"))
 
 
+@app.get("/chat")
+def chat_page():
+    return FileResponse(os.path.join(BASE_DIR, "static", "chat.html"))
+
+
 @app.get("/monsters")
 def list_monsters(limit: int = 10):
     conn = get_db()

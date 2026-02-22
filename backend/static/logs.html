@@ -3,25 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Query Logs - RO Assistant</title>
+    <title>Query Logs — RO Community Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
-            color: #333;
-            min-height: 100vh;
+        .logs-container {
+            max-width: 960px;
+            margin: 0 auto;
             padding: 1.5rem;
         }
 
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-        }
-
-        header {
-            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+        .logs-header {
+            background: linear-gradient(135deg, var(--ro-brown-dark) 0%, var(--ro-brown-medium) 100%);
             color: #fff;
             padding: 1.2rem 1.5rem;
             border-radius: 12px 12px 0 0;
@@ -30,9 +22,15 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 0.75rem;
+            border-bottom: 2px solid var(--ro-gold);
         }
 
-        header h1 { font-size: 1.2rem; font-weight: 600; }
+        .logs-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--ro-gold-bright);
+        }
 
         .controls {
             display: flex;
@@ -58,7 +56,7 @@
         .btn-toggle:hover { background: rgba(255,255,255,0.25); }
 
         .btn-toggle.active {
-            background: #4a90d9;
+            background: var(--ro-gold);
             color: #fff;
         }
 
@@ -70,20 +68,20 @@
         .btn-refresh:hover { background: rgba(255,255,255,0.25); }
 
         .stats {
-            background: #fff;
+            background: var(--ro-parchment-light);
             padding: 0.75rem 1.5rem;
             font-size: 0.85rem;
-            color: #666;
-            border-bottom: 1px solid #e0e0e0;
+            color: var(--ro-text-light);
+            border-bottom: 1px solid rgba(139, 105, 20, 0.15);
         }
 
-        .stats span { font-weight: 600; color: #333; }
+        .stats span { font-weight: 600; color: var(--ro-brown); }
 
         .table-wrapper {
             background: #fff;
             border-radius: 0 0 12px 12px;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(58, 31, 4, 0.1);
         }
 
         table {
@@ -92,25 +90,25 @@
         }
 
         th {
-            background: #f5f5f5;
+            background: var(--ro-parchment);
             text-align: left;
             padding: 0.75rem 1rem;
             font-size: 0.8rem;
             text-transform: uppercase;
-            color: #888;
-            border-bottom: 1px solid #e0e0e0;
+            color: var(--ro-text-light);
+            border-bottom: 1px solid rgba(139, 105, 20, 0.2);
         }
 
         td {
             padding: 0.75rem 1rem;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0ebe0;
             font-size: 0.88rem;
             vertical-align: top;
         }
 
-        tr:hover td { background: #f9f9f9; }
+        tr:hover td { background: var(--ro-parchment-light); }
 
-        .col-time { width: 140px; color: #888; font-size: 0.8rem; }
+        .col-time { width: 140px; color: var(--ro-text-light); font-size: 0.8rem; }
         .col-intent { width: 120px; }
         .col-question { width: 35%; }
         .col-answer { width: auto; }
@@ -121,8 +119,8 @@
             border-radius: 4px;
             font-size: 0.75rem;
             font-weight: 500;
-            background: #e8f0fe;
-            color: #1a73e8;
+            background: rgba(139, 105, 20, 0.1);
+            color: var(--ro-gold);
         }
 
         .intent-badge.general {
@@ -138,26 +136,16 @@
             font-size: 0.83rem;
         }
 
-        .answer-text.answered { color: #333; }
+        .answer-text.answered { color: var(--ro-text); }
 
         .empty-state {
             text-align: center;
             padding: 3rem;
-            color: #999;
+            color: var(--ro-text-light);
         }
-
-        .back-link {
-            display: inline-block;
-            margin-top: 1rem;
-            color: rgba(255,255,255,0.6);
-            text-decoration: none;
-            font-size: 0.85rem;
-        }
-
-        .back-link:hover { color: #fff; }
 
         @media (max-width: 700px) {
-            body { padding: 0.5rem; }
+            .logs-container { padding: 0.5rem; }
             .col-time { display: none; }
             .col-intent { width: 80px; }
             td, th { padding: 0.5rem; font-size: 0.82rem; }
@@ -165,15 +153,27 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">RO Hub</a>
+        <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/logs" class="active">Logs</a></li>
+        </ul>
+    </nav>
+
+    <div class="logs-container">
+        <div class="logs-header">
             <h1>Query Logs</h1>
             <div class="controls">
                 <button class="btn-toggle active" id="btnUnanswered" onclick="toggleFilter(true)">Unanswered</button>
                 <button class="btn-toggle" id="btnAll" onclick="toggleFilter(false)">All Queries</button>
                 <button class="btn-refresh" onclick="loadLogs()">Refresh</button>
             </div>
-        </header>
+        </div>
         <div class="stats" id="stats">Loading...</div>
         <div class="table-wrapper">
             <table>
@@ -189,7 +189,6 @@
             </table>
             <div class="empty-state" id="emptyState" style="display:none;">No logs found.</div>
         </div>
-        <a href="/" class="back-link">&larr; Back to Chat</a>
     </div>
 
     <script>
