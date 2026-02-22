@@ -426,6 +426,93 @@ body {
     fill: currentColor;
 }
 
+/* ===== SERVER CARDS ===== */
+.server-group-label {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ro-brown);
+    margin-bottom: 1rem;
+    padding-left: 0.25rem;
+}
+
+.server-group-label.upcoming {
+    margin-top: 2rem;
+}
+
+.servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.server-card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(139, 105, 20, 0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.server-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.server-card.upcoming {
+    opacity: 0.85;
+}
+
+.server-status-bar {
+    padding: 0.4rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.server-status-bar.live {
+    background: var(--ro-green-online);
+    color: #fff;
+}
+
+.server-status-bar.upcoming {
+    background: var(--ro-gold);
+    color: #fff;
+}
+
+.server-body {
+    padding: 1rem;
+}
+
+.server-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ro-brown);
+    margin-bottom: 0.5rem;
+}
+
+.server-detail {
+    font-size: 0.83rem;
+    color: var(--ro-text);
+    margin-bottom: 0.2rem;
+    line-height: 1.5;
+}
+
+.server-detail strong {
+    color: var(--ro-brown-medium);
+}
+
+.server-desc {
+    font-size: 0.83rem;
+    color: var(--ro-text-light);
+    line-height: 1.5;
+    margin-top: 0.5rem;
+}
+
 /* ===== EMPTY STATES ===== */
 .empty-streams {
     text-align: center;
@@ -484,7 +571,8 @@ body {
     }
 
     .streams-grid,
-    .streamers-grid {
+    .streamers-grid,
+    .servers-grid {
         grid-template-columns: 1fr;
     }
 
