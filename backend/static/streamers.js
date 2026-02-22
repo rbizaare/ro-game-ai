@@ -60,6 +60,146 @@ const STREAMERS = [
         streamTitle: "",
         bio: "High Wizard / Warlock PvM player. AoE farming, leveling guides, and chill grinding sessions.",
         socials: { facebook: "#", youtube: "#" }
+    },
+    {
+        name: "CrusaderBlade",
+        avatar: "C",
+        platform: "facebook",
+        isOnline: true,
+        viewers: 278,
+        streamTitle: "Grand Cross Crusader — Bio3 Solo Runs",
+        bio: "Paladin / Royal Guard main. I love tanking, Grand Cross builds, and soloing instances for the community.",
+        socials: { facebook: "#", youtube: "#" }
+    },
+    {
+        name: "DancerMuse",
+        avatar: "D",
+        platform: "youtube",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Dancer / Gypsy support player. I stream party play, WoE support tactics, and fun meme builds.",
+        socials: { youtube: "#" }
+    },
+    {
+        name: "AssassinCross_PH",
+        avatar: "A",
+        platform: "facebook",
+        isOnline: true,
+        viewers: 415,
+        streamTitle: "SBK Farming — Zeny Grind Session",
+        bio: "Assassin Cross main since classic RO. Soul Breaker PvP and efficient farming streams daily.",
+        socials: { facebook: "#", youtube: "#" }
+    },
+    {
+        name: "MonkFistPH",
+        avatar: "F",
+        platform: "twitch",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Champion / Sura enthusiast. Asura Strike one-shots, combo monk builds, and PvP highlights.",
+        socials: { twitch: "#", facebook: "#" }
+    },
+    {
+        name: "AlchemistLab",
+        avatar: "L",
+        platform: "youtube",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Biochemist / Geneticist main. Homunculus guides, Hell Plant builds, and crafting economy tips.",
+        socials: { youtube: "#" }
+    },
+    {
+        name: "BardOfGeffen",
+        avatar: "G",
+        platform: "facebook",
+        isOnline: true,
+        viewers: 156,
+        streamTitle: "Maestro Support — WoE Guild Runs",
+        bio: "Bard / Maestro player focused on WoE ensemble support. Music buffs and party coordination streams.",
+        socials: { facebook: "#", youtube: "#" }
+    },
+    {
+        name: "NinjaShadowPH",
+        avatar: "N",
+        platform: "facebook",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Ninja / Kagerou main. Showcasing the underrated ninja class with unique PvP and PvM builds.",
+        socials: { facebook: "#" }
+    },
+    {
+        name: "GunSlingerAce",
+        avatar: "R",
+        platform: "twitch",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Gunslinger / Rebellion specialist. Rapid fire builds, coin flip strategies, and Western-themed streams.",
+        socials: { twitch: "#", youtube: "#" }
+    },
+    {
+        name: "SuperNovicePH",
+        avatar: "V",
+        platform: "youtube",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Super Novice challenge runner. Can a Super Novice clear ET? Tune in and find out. Meme builds welcome.",
+        socials: { youtube: "#", facebook: "#" }
+    },
+    {
+        name: "TaeKwonMaster",
+        avatar: "T",
+        platform: "facebook",
+        isOnline: true,
+        viewers: 203,
+        streamTitle: "Star Gladiator PvP — Ranked Matches",
+        bio: "Star Gladiator / Soul Linker duo player. Kick combos, universe stance PvP, and soul link support.",
+        socials: { facebook: "#" }
+    },
+    {
+        name: "SageElemental",
+        avatar: "E",
+        platform: "youtube",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Professor / Sorcerer main. Elemental strategy, spell combos, and endgame magic DPS optimization.",
+        socials: { youtube: "#", facebook: "#" }
+    },
+    {
+        name: "BlacksmithForge",
+        avatar: "X",
+        platform: "facebook",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Whitesmith / Mechanic crafter. Forging success streams, cart builds, and merchant class economy guides.",
+        socials: { facebook: "#", youtube: "#" }
+    },
+    {
+        name: "RogueLifePH",
+        avatar: "O",
+        platform: "twitch",
+        isOnline: true,
+        viewers: 189,
+        streamTitle: "Rogue Treasure Hunting — Gramps Party",
+        bio: "Rogue / Shadow Chaser treasure hunter. Plagiarism builds, steal farming, and fun party content.",
+        socials: { twitch: "#", facebook: "#" }
+    },
+    {
+        name: "PetAdventures",
+        avatar: "J",
+        platform: "youtube",
+        isOnline: false,
+        viewers: 0,
+        streamTitle: "",
+        bio: "Pet system enthusiast and casual player. Taming guides, pet evolution, and wholesome RO adventures.",
+        socials: { youtube: "#", facebook: "#" }
     }
 ];
 
@@ -128,6 +268,7 @@ function renderStreamerCard(streamer) {
 document.addEventListener('DOMContentLoaded', () => {
     const streamsGrid = document.getElementById('streamsGrid');
     const streamersGrid = document.getElementById('streamersGrid');
+    const allStreamersGrid = document.getElementById('allStreamersGrid');
 
     if (streamsGrid) {
         const onlineStreamers = STREAMERS.filter(s => s.isOnline);
@@ -164,8 +305,22 @@ document.addEventListener('DOMContentLoaded', () => {
         updateButtons();
     }
 
+    /* Landing page: show first 6 streamers */
     if (streamersGrid) {
         const sorted = [...STREAMERS].sort((a, b) => b.isOnline - a.isOnline || b.viewers - a.viewers);
-        streamersGrid.innerHTML = sorted.map(renderStreamerCard).join('');
+        streamersGrid.innerHTML = sorted.slice(0, 6).map(renderStreamerCard).join('');
+    }
+
+    /* Full streamers page: show all */
+    if (allStreamersGrid) {
+        const sorted = [...STREAMERS].sort((a, b) => b.isOnline - a.isOnline || b.viewers - a.viewers);
+        allStreamersGrid.innerHTML = sorted.map(renderStreamerCard).join('');
+
+        /* Update count */
+        const countEl = document.getElementById('streamerCount');
+        if (countEl) {
+            const online = STREAMERS.filter(s => s.isOnline).length;
+            countEl.textContent = `${STREAMERS.length} streamers — ${online} currently live`;
+        }
     }
 });

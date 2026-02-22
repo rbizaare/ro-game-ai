@@ -198,6 +198,11 @@ body {
     margin-bottom: 2rem;
 }
 
+.section-cta {
+    text-align: center;
+    margin-top: 2rem;
+}
+
 /* ===== STREAM CAROUSEL ===== */
 .streams-carousel {
     position: relative;

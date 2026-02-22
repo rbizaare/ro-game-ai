@@ -33,6 +33,11 @@ def chat_page():
     return FileResponse(os.path.join(BASE_DIR, "static", "chat.html"))
 
 
+@app.get("/streamers")
+def streamers_page():
+    return FileResponse(os.path.join(BASE_DIR, "static", "streamers-page.html"))
+
+
 @app.get("/monsters")
 def list_monsters(limit: int = 10):
     conn = get_db()
