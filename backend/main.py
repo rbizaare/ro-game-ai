@@ -38,6 +38,11 @@ def streamers_page():
     return FileResponse(os.path.join(BASE_DIR, "static", "streamers-page.html"))
 
 
+@app.get("/servers")
+def servers_page():
+    return FileResponse(os.path.join(BASE_DIR, "static", "servers-page.html"))
+
+
 @app.get("/monsters")
 def list_monsters(limit: int = 10):
     conn = get_db()
