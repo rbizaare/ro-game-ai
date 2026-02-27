@@ -27,6 +27,42 @@ const STREAMERS = [
         platform: "twitch",
         bio: "Streaming programming stuff and games whenever I can. Twitch Affiliate.",
         socials: { twitch: "https://www.twitch.tv/hakister" }
+    },
+    {
+        name: "xrhonn",
+        displayName: "xRhonn",
+        avatar: "R",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/62fa4e97-0c13-4482-b029-73c046addc65-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Twitch Affiliate streamer. Catch me on Twitch, Facebook, and TikTok!",
+        socials: { twitch: "https://www.twitch.tv/xrhonn", facebook: "https://fb.gg/xrhonnn" }
+    },
+    {
+        name: "apocalyptogg",
+        displayName: "apocalyptoGG",
+        avatar: "G",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/e611e3be-c657-487d-bb29-f5439f5fbb7d-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Expect Old School Ragnarok Online and Just Chatting with pop-rock-OPM songs.",
+        socials: { twitch: "https://www.twitch.tv/apocalyptogg" }
+    },
+    {
+        name: "bossnel29",
+        displayName: "bossnel29",
+        avatar: "N",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/eb14aebc-cb36-4c8b-9e3f-7e19b60da77d-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Ragnarok Online streamer and Twitch Affiliate from the Philippines.",
+        socials: { twitch: "https://www.twitch.tv/bossnel29" }
+    },
+    {
+        name: "arthrconan",
+        displayName: "ArthrConan",
+        avatar: "C",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/d581d145-49be-4c76-96de-b11d05342045-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Twitch Affiliate streamer.",
+        socials: { twitch: "https://www.twitch.tv/arthrconan" }
     }
 ];
 
