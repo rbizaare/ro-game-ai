@@ -1,208 +1,3 @@
-/* ===== Streamer Placeholder Data & Rendering ===== */
-
-const STREAMERS = [
-    {
-        name: "KnightWalker",
-        avatar: "K",
-        platform: "facebook",
-        isOnline: true,
-        viewers: 342,
-        streamTitle: "WoE Practice — Guild Siege Highlights!",
-        bio: "Veteran RO player since 2003. Lord Knight main specializing in WoE and MVP hunts. Streams guild wars every weekend.",
-        socials: { facebook: "#", youtube: "#" }
-    },
-    {
-        name: "PriestlyHeals",
-        avatar: "P",
-        platform: "youtube",
-        isOnline: true,
-        viewers: 187,
-        streamTitle: "Full Support HP — ET Floor 90+ Runs",
-        bio: "High Priest / Arch Bishop main. I stream party content, Endless Tower runs, and new player guides.",
-        socials: { youtube: "#", facebook: "#" }
-    },
-    {
-        name: "ShadowChaser_PH",
-        avatar: "S",
-        platform: "facebook",
-        isOnline: true,
-        viewers: 521,
-        streamTitle: "BG Ranked Matches — Road to Top 10",
-        bio: "Stalker / Shadow Chaser PvP specialist. If it involves stealth and strategy, I'm in. Daily BG streams.",
-        socials: { facebook: "#" }
-    },
-    {
-        name: "BrewerMaster",
-        avatar: "B",
-        platform: "youtube",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Creator class enthusiast. Potion brewing, homunculus guides, and merchant life content.",
-        socials: { youtube: "#", facebook: "#" }
-    },
-    {
-        name: "MVPHunterX",
-        avatar: "M",
-        platform: "twitch",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Sniper main doing daily MVP hunts and farming guides. I share all my zeny-making secrets.",
-        socials: { twitch: "#", youtube: "#" }
-    },
-    {
-        name: "WizardOfProntera",
-        avatar: "W",
-        platform: "facebook",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "High Wizard / Warlock PvM player. AoE farming, leveling guides, and chill grinding sessions.",
-        socials: { facebook: "#", youtube: "#" }
-    },
-    {
-        name: "CrusaderBlade",
-        avatar: "C",
-        platform: "facebook",
-        isOnline: true,
-        viewers: 278,
-        streamTitle: "Grand Cross Crusader — Bio3 Solo Runs",
-        bio: "Paladin / Royal Guard main. I love tanking, Grand Cross builds, and soloing instances for the community.",
-        socials: { facebook: "#", youtube: "#" }
-    },
-    {
-        name: "DancerMuse",
-        avatar: "D",
-        platform: "youtube",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Dancer / Gypsy support player. I stream party play, WoE support tactics, and fun meme builds.",
-        socials: { youtube: "#" }
-    },
-    {
-        name: "AssassinCross_PH",
-        avatar: "A",
-        platform: "facebook",
-        isOnline: true,
-        viewers: 415,
-        streamTitle: "SBK Farming — Zeny Grind Session",
-        bio: "Assassin Cross main since classic RO. Soul Breaker PvP and efficient farming streams daily.",
-        socials: { facebook: "#", youtube: "#" }
-    },
-    {
-        name: "MonkFistPH",
-        avatar: "F",
-        platform: "twitch",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Champion / Sura enthusiast. Asura Strike one-shots, combo monk builds, and PvP highlights.",
-        socials: { twitch: "#", facebook: "#" }
-    },
-    {
-        name: "AlchemistLab",
-        avatar: "L",
-        platform: "youtube",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Biochemist / Geneticist main. Homunculus guides, Hell Plant builds, and crafting economy tips.",
-        socials: { youtube: "#" }
-    },
-    {
-        name: "BardOfGeffen",
-        avatar: "G",
-        platform: "facebook",
-        isOnline: true,
-        viewers: 156,
-        streamTitle: "Maestro Support — WoE Guild Runs",
-        bio: "Bard / Maestro player focused on WoE ensemble support. Music buffs and party coordination streams.",
-        socials: { facebook: "#", youtube: "#" }
-    },
-    {
-        name: "NinjaShadowPH",
-        avatar: "N",
-        platform: "facebook",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Ninja / Kagerou main. Showcasing the underrated ninja class with unique PvP and PvM builds.",
-        socials: { facebook: "#" }
-    },
-    {
-        name: "GunSlingerAce",
-        avatar: "R",
-        platform: "twitch",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Gunslinger / Rebellion specialist. Rapid fire builds, coin flip strategies, and Western-themed streams.",
-        socials: { twitch: "#", youtube: "#" }
-    },
-    {
-        name: "SuperNovicePH",
-        avatar: "V",
-        platform: "youtube",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Super Novice challenge runner. Can a Super Novice clear ET? Tune in and find out. Meme builds welcome.",
-        socials: { youtube: "#", facebook: "#" }
-    },
-    {
-        name: "TaeKwonMaster",
-        avatar: "T",
-        platform: "facebook",
-        isOnline: true,
-        viewers: 203,
-        streamTitle: "Star Gladiator PvP — Ranked Matches",
-        bio: "Star Gladiator / Soul Linker duo player. Kick combos, universe stance PvP, and soul link support.",
-        socials: { facebook: "#" }
-    },
-    {
-        name: "SageElemental",
-        avatar: "E",
-        platform: "youtube",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Professor / Sorcerer main. Elemental strategy, spell combos, and endgame magic DPS optimization.",
-        socials: { youtube: "#", facebook: "#" }
-    },
-    {
-        name: "BlacksmithForge",
-        avatar: "X",
-        platform: "facebook",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Whitesmith / Mechanic crafter. Forging success streams, cart builds, and merchant class economy guides.",
-        socials: { facebook: "#", youtube: "#" }
-    },
-    {
-        name: "RogueLifePH",
-        avatar: "O",
-        platform: "twitch",
-        isOnline: true,
-        viewers: 189,
-        streamTitle: "Rogue Treasure Hunting — Gramps Party",
-        bio: "Rogue / Shadow Chaser treasure hunter. Plagiarism builds, steal farming, and fun party content.",
-        socials: { twitch: "#", facebook: "#" }
-    },
-    {
-        name: "PetAdventures",
-        avatar: "J",
-        platform: "youtube",
-        isOnline: false,
-        viewers: 0,
-        streamTitle: "",
-        bio: "Pet system enthusiast and casual player. Taming guides, pet evolution, and wholesome RO adventures.",
-        socials: { youtube: "#", facebook: "#" }
-    }
-];
-
 /* ===== SVG Icons ===== */
 const SOCIAL_ICONS = {
     facebook: '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
@@ -239,88 +34,29 @@ function renderLiveStreamCard(stream) {
     `;
 }
 
-function renderStreamCard(streamer) {
-    return `
-        <div class="stream-card">
-            <div class="stream-embed">
-                <span class="stream-live-badge">LIVE</span>
-                <span>Stream Preview</span>
-            </div>
-            <div class="stream-info">
-                <div class="stream-avatar">${streamer.avatar}</div>
-                <div class="stream-meta">
-                    <div class="stream-name">${streamer.name}</div>
-                    <div class="stream-title">${streamer.streamTitle}</div>
-                </div>
-                <div class="stream-viewers">${streamer.viewers} viewers</div>
-            </div>
-        </div>
-    `;
-}
-
-function renderStreamerCard(streamer) {
-    const statusClass = streamer.isOnline ? 'online' : '';
-    const statusText = streamer.isOnline
-        ? `<div class="streamer-viewers-tag">${streamer.viewers} viewers — LIVE</div>`
-        : '<div class="streamer-viewers-tag offline-text">Offline</div>';
-
-    const socialsHtml = Object.entries(streamer.socials).map(([platform, url]) => `
-        <a href="${url}" class="social-link" title="${platform}">
-            ${SOCIAL_ICONS[platform] || ''}
-        </a>
-    `).join('');
-
-    return `
-        <div class="streamer-card">
-            <div class="streamer-header">
-                <div class="streamer-avatar">
-                    ${streamer.avatar}
-                    <span class="streamer-status-dot ${statusClass}"></span>
-                </div>
-                <div>
-                    <div class="streamer-name">${streamer.name}</div>
-                    <span class="streamer-platform platform-${streamer.platform}">${streamer.platform}</span>
-                </div>
-            </div>
-            <div class="streamer-body">
-                <p class="streamer-bio">${streamer.bio}</p>
-                ${statusText}
-                <div class="streamer-socials">${socialsHtml}</div>
-            </div>
-        </div>
-    `;
-}
-
 /* ===== Initialize on Page Load ===== */
 document.addEventListener('DOMContentLoaded', () => {
     const streamsGrid = document.getElementById('streamsGrid');
-    const streamersGrid = document.getElementById('streamersGrid');
-    const allStreamersGrid = document.getElementById('allStreamersGrid');
 
     if (streamsGrid) {
         loadLiveStreams(streamsGrid);
     }
 
-    /* Fetch real live streams from backend, then combine with dummy online streamers */
+    /* Fetch real live streams from Twitch API */
     async function loadLiveStreams(grid) {
-        const onlineStreamers = STREAMERS.filter(s => s.isOnline);
-
-        let realHtml = '';
+        let streams = [];
         try {
             const resp = await fetch('/api/live-streams');
             const data = await resp.json();
             if (data.streams && data.streams.length > 0) {
-                realHtml = data.streams.map(renderLiveStreamCard).join('');
+                streams = data.streams;
             }
         } catch (e) {
-            /* API unavailable — just show dummy streams */
+            /* API unavailable */
         }
 
-        const dummyHtml = onlineStreamers.map(renderStreamCard).join('');
-        const combined = realHtml + dummyHtml;
-
-        if (combined) {
-            grid.innerHTML = combined;
+        if (streams.length > 0) {
+            grid.innerHTML = streams.map(renderLiveStreamCard).join('');
             initCarousel(grid);
         } else {
             grid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
@@ -350,24 +86,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
         track.addEventListener('scroll', updateButtons);
         updateButtons();
-    }
-
-    /* Landing page: show first 6 streamers */
-    if (streamersGrid) {
-        const sorted = [...STREAMERS].sort((a, b) => b.isOnline - a.isOnline || b.viewers - a.viewers);
-        streamersGrid.innerHTML = sorted.slice(0, 6).map(renderStreamerCard).join('');
-    }
-
-    /* Full streamers page: show all */
-    if (allStreamersGrid) {
-        const sorted = [...STREAMERS].sort((a, b) => b.isOnline - a.isOnline || b.viewers - a.viewers);
-        allStreamersGrid.innerHTML = sorted.map(renderStreamerCard).join('');
-
-        /* Update count */
-        const countEl = document.getElementById('streamerCount');
-        if (countEl) {
-            const online = STREAMERS.filter(s => s.isOnline).length;
-            countEl.textContent = `${STREAMERS.length} streamers — ${online} currently live`;
-        }
     }
 });
