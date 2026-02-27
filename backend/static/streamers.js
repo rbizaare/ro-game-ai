@@ -18,6 +18,15 @@ const STREAMERS = [
         platform: "twitch",
         bio: "Andz is my name, Ragnarok is my game. Twitch Affiliate and PH RO content creator.",
         socials: { twitch: "https://www.twitch.tv/andzph" }
+    },
+    {
+        name: "hakister",
+        displayName: "hakister",
+        avatar: "H",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/0ef15cdb-c361-45e4-bb93-ebbd396d3819-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Streaming programming stuff and games whenever I can. Twitch Affiliate.",
+        socials: { twitch: "https://www.twitch.tv/hakister" }
     }
 ];
 
