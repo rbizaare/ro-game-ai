@@ -212,6 +212,33 @@ const SOCIAL_ICONS = {
 
 /* ===== Render Functions ===== */
 
+function renderLiveStreamCard(stream) {
+    const parentDomain = window.location.hostname;
+    const embedSrc = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${parentDomain}&muted=true&autoplay=true`;
+    const gameTag = stream.game ? `<span class="stream-game">${stream.game}</span>` : '';
+    return `
+        <div class="stream-card stream-card-real">
+            <div class="stream-embed stream-embed-real">
+                <span class="stream-live-badge">LIVE</span>
+                <iframe src="${embedSrc}"
+                    frameborder="0" allowfullscreen="true"
+                    allow="autoplay; encrypted-media"
+                    style="width:100%;height:100%;border:none;"></iframe>
+            </div>
+            <div class="stream-info">
+                <div class="stream-avatar">
+                    <a href="${stream.channel_url}" target="_blank" rel="noopener" title="Watch on Twitch">${stream.streamer.charAt(0)}</a>
+                </div>
+                <div class="stream-meta">
+                    <div class="stream-name">${stream.streamer} ${gameTag}</div>
+                    <div class="stream-title">${stream.title}</div>
+                </div>
+                <div class="stream-viewers">${stream.viewers.toLocaleString()} viewers</div>
+            </div>
+        </div>
+    `;
+}
+
 function renderStreamCard(streamer) {
     return `
         <div class="stream-card">
@@ -271,12 +298,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const allStreamersGrid = document.getElementById('allStreamersGrid');
 
     if (streamsGrid) {
+        loadLiveStreams(streamsGrid);
+    }
+
+    /* Fetch real live streams from backend, then combine with dummy online streamers */
+    async function loadLiveStreams(grid) {
         const onlineStreamers = STREAMERS.filter(s => s.isOnline);
-        if (onlineStreamers.length > 0) {
-            streamsGrid.innerHTML = onlineStreamers.map(renderStreamCard).join('');
-            initCarousel(streamsGrid);
+
+        let realHtml = '';
+        try {
+            const resp = await fetch('/api/live-streams');
+            const data = await resp.json();
+            if (data.streams && data.streams.length > 0) {
+                realHtml = data.streams.map(renderLiveStreamCard).join('');
+            }
+        } catch (e) {
+            /* API unavailable — just show dummy streams */
+        }
+
+        const dummyHtml = onlineStreamers.map(renderStreamCard).join('');
+        const combined = realHtml + dummyHtml;
+
+        if (combined) {
+            grid.innerHTML = combined;
+            initCarousel(grid);
         } else {
-            streamsGrid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
+            grid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
         }
     }
 

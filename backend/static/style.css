@@ -279,9 +279,25 @@ body {
     scroll-snap-align: start;
 }
 
+.stream-card-real {
+    border: 2px solid var(--ro-gold-bright);
+    box-shadow: 0 2px 16px rgba(212, 168, 67, 0.2);
+}
+
 .stream-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stream-embed-real {
+    background: #000;
+}
+
+.stream-embed-real iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .stream-embed {
@@ -332,6 +348,11 @@ body {
     flex-shrink: 0;
 }
 
+.stream-avatar a {
+    color: inherit;
+    text-decoration: none;
+}
+
 .stream-meta {
     flex: 1;
     min-width: 0;
@@ -349,6 +370,16 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.stream-game {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--ro-gold);
+    background: rgba(139, 105, 20, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.4rem;
 }
 
 .stream-viewers {
