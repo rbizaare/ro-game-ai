@@ -1,3 +1,26 @@
+/* ===== Streamer Profiles ===== */
+
+const STREAMERS = [
+    {
+        name: "primekirbs",
+        displayName: "primekirbs",
+        avatar: "K",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/487fa4fe-9d71-4221-a9c3-328471effc03-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Hello, I am Kirbs! Ragnarok Online streamer from the Philippines.",
+        socials: { twitch: "https://www.twitch.tv/primekirbs", facebook: "https://www.facebook.com/kirbsplays" }
+    },
+    {
+        name: "andzph",
+        displayName: "AndzPH",
+        avatar: "A",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/4ebf3401-09b2-4a19-b20b-604e2f8f7fa3-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Andz is my name, Ragnarok is my game. Twitch Affiliate and PH RO content creator.",
+        socials: { twitch: "https://www.twitch.tv/andzph" }
+    }
+];
+
 /* ===== SVG Icons ===== */
 const SOCIAL_ICONS = {
     facebook: '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
@@ -34,34 +57,96 @@ function renderLiveStreamCard(stream) {
     `;
 }
 
+function renderStreamerCard(streamer, liveData) {
+    const isLive = !!liveData;
+    const statusClass = isLive ? 'online' : '';
+    const statusText = isLive
+        ? `<div class="streamer-viewers-tag">${liveData.viewers.toLocaleString()} viewers — LIVE</div>`
+        : '<div class="streamer-viewers-tag offline-text">Offline</div>';
+
+    const avatarImg = streamer.avatarUrl
+        ? `<img src="${streamer.avatarUrl}" alt="${streamer.displayName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+        : streamer.avatar;
+
+    const socialsHtml = Object.entries(streamer.socials).map(([platform, url]) => `
+        <a href="${url}" class="social-link" title="${platform}" target="_blank" rel="noopener">
+            ${SOCIAL_ICONS[platform] || ''}
+        </a>
+    `).join('');
+
+    return `
+        <div class="streamer-card">
+            <div class="streamer-header">
+                <div class="streamer-avatar">
+                    ${avatarImg}
+                    <span class="streamer-status-dot ${statusClass}"></span>
+                </div>
+                <div>
+                    <div class="streamer-name">${streamer.displayName}</div>
+                    <span class="streamer-platform platform-${streamer.platform}">${streamer.platform}</span>
+                </div>
+            </div>
+            <div class="streamer-body">
+                <p class="streamer-bio">${streamer.bio}</p>
+                ${statusText}
+                <div class="streamer-socials">${socialsHtml}</div>
+            </div>
+        </div>
+    `;
+}
+
 /* ===== Initialize on Page Load ===== */
 document.addEventListener('DOMContentLoaded', () => {
     const streamsGrid = document.getElementById('streamsGrid');
+    const streamersGrid = document.getElementById('streamersGrid');
+    const allStreamersGrid = document.getElementById('allStreamersGrid');
 
-    if (streamsGrid) {
-        loadLiveStreams(streamsGrid);
-    }
+    /* Shared live data — fetched once, used by both sections */
+    let liveStreams = [];
 
-    /* Fetch real live streams from Twitch API */
-    async function loadLiveStreams(grid) {
-        let streams = [];
+    async function fetchLiveStreams() {
         try {
             const resp = await fetch('/api/live-streams');
             const data = await resp.json();
-            if (data.streams && data.streams.length > 0) {
-                streams = data.streams;
+            if (data.streams) liveStreams = data.streams;
+        } catch (e) { /* API unavailable */ }
+    }
+
+    function getLiveData(username) {
+        return liveStreams.find(s => s.user_login.toLowerCase() === username.toLowerCase()) || null;
+    }
+
+    async function init() {
+        await fetchLiveStreams();
+
+        /* Live Streams carousel */
+        if (streamsGrid) {
+            if (liveStreams.length > 0) {
+                streamsGrid.innerHTML = liveStreams.map(renderLiveStreamCard).join('');
+                initCarousel(streamsGrid);
+            } else {
+                streamsGrid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
             }
-        } catch (e) {
-            /* API unavailable */
         }
 
-        if (streams.length > 0) {
-            grid.innerHTML = streams.map(renderLiveStreamCard).join('');
-            initCarousel(grid);
-        } else {
-            grid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
+        /* Landing page: show all streamer profiles with live status */
+        if (streamersGrid) {
+            streamersGrid.innerHTML = STREAMERS.map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
+        }
+
+        /* Full streamers page: show all with live status */
+        if (allStreamersGrid) {
+            allStreamersGrid.innerHTML = STREAMERS.map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
+
+            const countEl = document.getElementById('streamerCount');
+            if (countEl) {
+                const online = STREAMERS.filter(s => getLiveData(s.name)).length;
+                countEl.textContent = `${STREAMERS.length} streamers — ${online} currently live`;
+            }
         }
     }
+
+    init();
 
     /* Carousel scroll buttons */
     function initCarousel(track) {
