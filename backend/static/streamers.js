@@ -63,6 +63,15 @@ const STREAMERS = [
         platform: "twitch",
         bio: "Twitch Affiliate streamer.",
         socials: { twitch: "https://www.twitch.tv/arthrconan" }
+    },
+    {
+        name: "tsinopuppy",
+        displayName: "TsinoPuppy",
+        avatar: "T",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/459ad349-4a8d-4560-a635-1062e16b76d9-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Gamer.",
+        socials: { twitch: "https://www.twitch.tv/tsinopuppy" }
     }
 ];
 
