@@ -1,15 +1,15 @@
-/* ===== Chat Page Styles (RO-themed) ===== */
+/* ===== Chat Page Styles (RO Icy Dark Theme) ===== */
 
 .chat-container {
     width: 100%;
     max-width: 720px;
     height: calc(100vh - var(--nav-height));
-    background: #fff;
+    background: #0e1219;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     margin: 0 auto;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Header */
@@ -43,7 +43,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    background: var(--ro-parchment-light);
+    background: #0e1219;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -79,9 +79,9 @@
 }
 
 .bot-message .message-content {
-    background: #fff;
+    background: #161c28;
     color: var(--ro-text);
-    border: 1px solid rgba(139, 105, 20, 0.2);
+    border: 1px solid rgba(90, 143, 173, 0.2);
     border-bottom-left-radius: 4px;
 }
 
@@ -106,7 +106,7 @@
 .typing .message-content span {
     width: 8px;
     height: 8px;
-    background: var(--ro-gold);
+    background: var(--ro-gold-bright);
     border-radius: 50%;
     display: inline-block;
     animation: bounce 1.4s infinite ease-in-out both;
@@ -125,29 +125,31 @@
 .chat-input-area {
     display: flex;
     padding: 0.75rem;
-    border-top: 1px solid rgba(139, 105, 20, 0.2);
+    border-top: 1px solid rgba(90, 143, 173, 0.2);
     gap: 0.5rem;
-    background: #fff;
+    background: #111620;
     flex-shrink: 0;
 }
 
 .chat-input-area input {
     flex: 1;
     padding: 0.75rem 1rem;
-    border: 1px solid rgba(139, 105, 20, 0.25);
+    border: 1px solid rgba(90, 143, 173, 0.25);
     border-radius: 8px;
     font-size: 0.95rem;
     outline: none;
     transition: border-color 0.2s;
-    background: var(--ro-parchment-light);
+    background: #0e1219;
+    color: var(--ro-text);
 }
 
 .chat-input-area input:focus {
-    border-color: var(--ro-gold);
+    border-color: var(--ro-gold-bright);
 }
 
 .chat-input-area input:disabled {
-    background: #f5f0e8;
+    background: #0b0e14;
+    color: #556;
 }
 
 .chat-input-area button {
@@ -167,7 +169,7 @@
 }
 
 .chat-input-area button:disabled {
-    background: #c4a96a;
+    background: #2a3545;
     cursor: not-allowed;
 }
 
@@ -177,9 +179,9 @@
     min-width: 40px;
     height: 40px;
     padding: 0;
-    background: var(--ro-parchment);
-    color: var(--ro-gold);
-    border: 1px solid rgba(139, 105, 20, 0.3);
+    background: rgba(90, 143, 173, 0.1);
+    color: var(--ro-gold-bright);
+    border: 1px solid rgba(90, 143, 173, 0.3);
     border-radius: 8px;
     font-size: 1.1rem;
     font-weight: 700;
@@ -200,7 +202,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(58, 31, 4, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     z-index: 100;
     justify-content: center;
     align-items: center;
@@ -212,14 +214,14 @@
 }
 
 .modal {
-    background: var(--ro-parchment-light);
+    background: #131825;
     border-radius: 12px;
     width: 100%;
     max-width: 520px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(58, 31, 4, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     border: 2px solid var(--ro-gold);
     animation: modalIn 0.2s ease-out;
 }
@@ -234,7 +236,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid rgba(139, 105, 20, 0.2);
+    border-bottom: 1px solid rgba(90, 143, 173, 0.2);
     flex-shrink: 0;
 }
 
@@ -242,7 +244,7 @@
     font-family: 'Cinzel', serif;
     font-size: 1.05rem;
     font-weight: 600;
-    color: var(--ro-brown);
+    color: var(--ro-gold-bright);
 }
 
 .modal-close {
@@ -256,7 +258,7 @@
 }
 
 .modal-close:hover {
-    color: var(--ro-brown);
+    color: var(--ro-gold-bright);
 }
 
 .modal-body {
@@ -279,7 +281,7 @@
     color: var(--ro-text-light);
     margin-bottom: 0.4rem;
     padding-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(139, 105, 20, 0.15);
+    border-bottom: 1px solid rgba(90, 143, 173, 0.15);
 }
 
 .cmd-item {
@@ -294,13 +296,13 @@
 }
 
 .cmd-item:hover {
-    background: var(--ro-parchment);
+    background: rgba(90, 143, 173, 0.1);
 }
 
 .cmd-pattern {
     font-size: 0.88rem;
     font-weight: 500;
-    color: var(--ro-gold);
+    color: var(--ro-gold-bright);
     white-space: nowrap;
 }
 
