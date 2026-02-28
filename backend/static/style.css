@@ -2,17 +2,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Cinzel:wght@400;600;700&display=swap');
 
 :root {
-    --ro-brown-dark: #0b0e14;
-    --ro-brown: #111620;
-    --ro-brown-medium: #1a2030;
-    --ro-gold: #5a8fad;
-    --ro-gold-bright: #a0c8e0;
-    --ro-parchment: #131825;
-    --ro-parchment-light: #0e1219;
+    --ro-brown-dark: #3a1f04;
+    --ro-brown: #4a2810;
+    --ro-brown-medium: #6b3a1f;
+    --ro-gold: #8B6914;
+    --ro-gold-bright: #d4a843;
+    --ro-parchment: #f5e6c8;
+    --ro-parchment-light: #faf3e6;
     --ro-green-online: #2ecc40;
-    --ro-red-offline: #556;
-    --ro-text: #c0cdd8;
-    --ro-text-light: #708090;
+    --ro-red-offline: #aaa;
+    --ro-text: #3a2a1a;
+    --ro-text-light: #7a6a5a;
     --nav-height: 60px;
 }
 
@@ -52,7 +52,7 @@ body {
 }
 
 .nav-logo:hover {
-    color: #c0ddef;
+    color: #f0c060;
 }
 
 .nav-links {
@@ -267,11 +267,11 @@ body {
 /* ===== STREAM CARDS ===== */
 
 .stream-card {
-    background: #161c28;
+    background: #fff;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(90, 143, 173, 0.15);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(139, 105, 20, 0.15);
     transition: transform 0.2s, box-shadow 0.2s;
     min-width: 320px;
     max-width: 360px;
@@ -281,12 +281,12 @@ body {
 
 .stream-card-real {
     border: 2px solid var(--ro-gold-bright);
-    box-shadow: 0 2px 16px rgba(90, 143, 173, 0.25);
+    box-shadow: 0 2px 16px rgba(212, 168, 67, 0.2);
 }
 
 .stream-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(90, 143, 173, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .stream-embed-real {
@@ -331,7 +331,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    background: #131825;
+    background: var(--ro-parchment-light);
 }
 
 .stream-avatar {
@@ -375,8 +375,8 @@ body {
 .stream-game {
     font-size: 0.7rem;
     font-weight: 400;
-    color: var(--ro-gold-bright);
-    background: rgba(90, 143, 173, 0.12);
+    color: var(--ro-gold);
+    background: rgba(139, 105, 20, 0.1);
     padding: 0.1rem 0.4rem;
     border-radius: 3px;
     margin-left: 0.4rem;
@@ -397,17 +397,17 @@ body {
 }
 
 .streamer-card {
-    background: #161c28;
+    background: #fff;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(90, 143, 173, 0.15);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(139, 105, 20, 0.15);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .streamer-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(90, 143, 173, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .streamer-header {
@@ -502,11 +502,11 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    background: rgba(90, 143, 173, 0.1);
+    background: var(--ro-parchment);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ro-gold-bright);
+    color: var(--ro-brown-medium);
     text-decoration: none;
     transition: background 0.2s, color 0.2s;
 }
@@ -545,15 +545,15 @@ body {
 .server-banner {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(90, 143, 173, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(139, 105, 20, 0.15);
     transition: transform 0.3s, box-shadow 0.3s;
-    background: #161c28;
+    background: #fff;
 }
 
 .server-banner:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(90, 143, 173, 0.2);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
 }
 
 .server-banner.upcoming {
@@ -589,8 +589,8 @@ body {
     inset: 0;
     background: linear-gradient(
         to bottom,
-        rgba(11, 14, 20, 0.1) 0%,
-        rgba(11, 14, 20, 0.5) 100%
+        rgba(58, 31, 4, 0.1) 0%,
+        rgba(58, 31, 4, 0.35) 100%
     );
 }
 
@@ -616,7 +616,7 @@ body {
 .server-badge.soon {
     background: var(--ro-gold);
     color: #fff;
-    box-shadow: 0 0 8px rgba(90, 143, 173, 0.4);
+    box-shadow: 0 0 8px rgba(139, 105, 20, 0.4);
 }
 
 .server-badge-featured {
@@ -630,9 +630,9 @@ body {
     letter-spacing: 1px;
     text-transform: uppercase;
     z-index: 1;
-    background: rgba(160, 200, 224, 0.15);
-    color: var(--ro-gold-bright);
-    border: 1px solid rgba(160, 200, 224, 0.3);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--ro-gold);
+    border: 1px solid var(--ro-gold-bright);
 }
 
 .server-banner-content {
@@ -660,9 +660,9 @@ body {
     border-radius: 4px;
     font-size: 0.72rem;
     font-weight: 600;
-    background: rgba(90, 143, 173, 0.1);
-    color: var(--ro-gold-bright);
-    border: 1px solid rgba(90, 143, 173, 0.2);
+    background: var(--ro-parchment);
+    color: var(--ro-brown-medium);
+    border: 1px solid rgba(139, 105, 20, 0.15);
 }
 
 .server-desc {
