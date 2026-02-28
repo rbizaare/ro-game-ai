@@ -72,6 +72,24 @@ const STREAMERS = [
         platform: "twitch",
         bio: "Gamer.",
         socials: { twitch: "https://www.twitch.tv/tsinopuppy" }
+    },
+    {
+        name: "indeavori",
+        displayName: "indeavori",
+        avatar: "I",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/d20ecc59-da17-4ea4-8d9f-f4df67b88310-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "I usually play Ragnarok Online and Apex Legends. Also does art commissions!",
+        socials: { twitch: "https://www.twitch.tv/indeavori" }
+    },
+    {
+        name: "john_weak_tv",
+        displayName: "john_weak_tv",
+        avatar: "J",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/235392cd-b88c-4cc8-b3d9-d76722116ac2-profile_image-300x300.jpeg",
+        platform: "twitch",
+        bio: "US Navy streamer. Your help is appreciated — please subscribe and share!",
+        socials: { twitch: "https://www.twitch.tv/john_weak_tv" }
     }
 ];
 
