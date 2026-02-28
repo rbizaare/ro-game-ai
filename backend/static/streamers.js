@@ -102,9 +102,10 @@ const SOCIAL_ICONS = {
 
 /* ===== Render Functions ===== */
 
-function renderLiveStreamCard(stream) {
+function renderLiveStreamCard(stream, index) {
     const parentDomain = window.location.hostname;
-    const embedSrc = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${parentDomain}&muted=true&autoplay=true`;
+    const autoplay = index === 0 ? 'true' : 'false';
+    const embedSrc = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${parentDomain}&muted=true&autoplay=${autoplay}`;
     const gameTag = stream.game ? `<span class="stream-game">${stream.game}</span>` : '';
     return `
         <div class="stream-card stream-card-real">
@@ -194,25 +195,28 @@ document.addEventListener('DOMContentLoaded', () => {
         /* Live Streams carousel */
         if (streamsGrid) {
             if (liveStreams.length > 0) {
-                streamsGrid.innerHTML = liveStreams.map(renderLiveStreamCard).join('');
+                streamsGrid.innerHTML = liveStreams.map((s, i) => renderLiveStreamCard(s, i)).join('');
                 initCarousel(streamsGrid);
             } else {
                 streamsGrid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
             }
         }
 
-        /* Landing page: show all streamer profiles with live status */
+        /* Sort streamers alphabetically by display name */
+        const sorted = [...STREAMERS].sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
+
+        /* Landing page: show first 6 streamer profiles with live status */
         if (streamersGrid) {
-            streamersGrid.innerHTML = STREAMERS.map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
+            streamersGrid.innerHTML = sorted.slice(0, 6).map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
         }
 
         /* Full streamers page: show all with live status */
         if (allStreamersGrid) {
-            allStreamersGrid.innerHTML = STREAMERS.map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
+            allStreamersGrid.innerHTML = sorted.map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
 
             const countEl = document.getElementById('streamerCount');
             if (countEl) {
-                const online = STREAMERS.filter(s => getLiveData(s.name)).length;
+                const online = sorted.filter(s => getLiveData(s.name)).length;
                 countEl.textContent = `${STREAMERS.length} streamers — ${online} currently live`;
             }
         }
