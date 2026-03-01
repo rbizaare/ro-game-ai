@@ -133,8 +133,9 @@ function renderLiveStreamCard(stream, index) {
 function renderStreamerCard(streamer, liveData) {
     const isLive = !!liveData;
     const statusClass = isLive ? 'online' : '';
+    const liveBadge = isLive ? '<span class="streamer-live-badge">LIVE</span>' : '';
     const statusText = isLive
-        ? `<div class="streamer-viewers-tag">${liveData.viewers.toLocaleString()} viewers — LIVE</div>`
+        ? `<div class="streamer-viewers-tag">${liveData.viewers.toLocaleString()} viewers</div>`
         : '<div class="streamer-viewers-tag offline-text">Offline</div>';
 
     const avatarImg = streamer.avatarUrl
@@ -150,6 +151,7 @@ function renderStreamerCard(streamer, liveData) {
     return `
         <div class="streamer-card">
             <div class="streamer-header">
+                ${liveBadge}
                 <div class="streamer-avatar">
                     ${avatarImg}
                     <span class="streamer-status-dot ${statusClass}"></span>
