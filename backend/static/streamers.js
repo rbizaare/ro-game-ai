@@ -176,8 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const streamersGrid = document.getElementById('streamersGrid');
     const allStreamersGrid = document.getElementById('allStreamersGrid');
 
-    /* Shared live data — fetched once, used by both sections */
+    const POLL_INTERVAL = 60000; /* 60 seconds — matches backend cache TTL */
+
+    /* Shared live data */
     let liveStreams = [];
+    let prevLiveKey = ''; /* fingerprint to detect changes */
 
     async function fetchLiveStreams() {
         try {
@@ -191,22 +194,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return liveStreams.find(s => s.user_login.toLowerCase() === username.toLowerCase()) || null;
     }
 
-    async function init() {
-        await fetchLiveStreams();
+    /* Build a fingerprint of current live state to detect changes */
+    function liveFingerprint() {
+        return liveStreams.map(s => s.user_login).sort().join(',');
+    }
 
-        /* Live Streams carousel */
-        if (streamsGrid) {
-            if (liveStreams.length > 0) {
-                streamsGrid.innerHTML = liveStreams.map((s, i) => renderLiveStreamCard(s, i)).join('');
-                initCarousel(streamsGrid);
-            } else {
-                streamsGrid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
-            }
-        }
+    /* Sort streamers alphabetically (stable, computed once) */
+    const sorted = [...STREAMERS].sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
 
-        /* Sort streamers alphabetically by display name */
-        const sorted = [...STREAMERS].sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
-
+    function renderStreamerSections() {
         /* Landing page: show first 6 streamer profiles with live status */
         if (streamersGrid) {
             streamersGrid.innerHTML = sorted.slice(0, 6).map(s => renderStreamerCard(s, getLiveData(s.name))).join('');
@@ -221,6 +217,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 const online = sorted.filter(s => getLiveData(s.name)).length;
                 countEl.textContent = `${STREAMERS.length} streamers — ${online} currently live`;
             }
+        }
+    }
+
+    function renderLiveSection() {
+        if (!streamsGrid) return;
+        if (liveStreams.length > 0) {
+            streamsGrid.innerHTML = liveStreams.map((s, i) => renderLiveStreamCard(s, i)).join('');
+            initCarousel(streamsGrid);
+        } else {
+            streamsGrid.innerHTML = '<div class="empty-streams">No streamers are live right now. Check back later!</div>';
+        }
+    }
+
+    /* Initial load */
+    async function init() {
+        await fetchLiveStreams();
+        prevLiveKey = liveFingerprint();
+        renderLiveSection();
+        renderStreamerSections();
+
+        /* Start polling */
+        setInterval(poll, POLL_INTERVAL);
+    }
+
+    /* Poll for changes — only re-render when live lineup changes */
+    async function poll() {
+        await fetchLiveStreams();
+        const newKey = liveFingerprint();
+        if (newKey !== prevLiveKey) {
+            prevLiveKey = newKey;
+            renderLiveSection();
+            renderStreamerSections();
         }
     }
 
