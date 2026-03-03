@@ -233,11 +233,12 @@
 
                 empty.style.display = 'none';
                 body.innerHTML = logs.map(log => {
+                    const intent = escapeHtml(log.intent || 'unknown');
                     const intentClass = log.intent === 'general' ? ' general' : '';
                     const answerClass = log.is_unanswered ? '' : ' answered';
                     return `<tr>
-                        <td class="col-time">${formatTime(log.timestamp)}</td>
-                        <td class="col-intent"><span class="intent-badge${intentClass}">${log.intent || 'unknown'}</span></td>
+                        <td class="col-time">${escapeHtml(formatTime(log.timestamp))}</td>
+                        <td class="col-intent"><span class="intent-badge${intentClass}">${intent}</span></td>
                         <td class="col-question">${escapeHtml(log.question)}</td>
                         <td class="col-answer"><div class="answer-text${answerClass}">${escapeHtml(truncate(log.answer, 200))}</div></td>
                     </tr>`;

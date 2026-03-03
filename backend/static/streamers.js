@@ -109,24 +109,42 @@ const SOCIAL_ICONS = {
     twitch: '<svg viewBox="0 0 24 24"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>'
 };
 
+/* ===== Utilities ===== */
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+const ALLOWED_PLATFORMS = ['twitch', 'youtube', 'facebook'];
+
+function safePlatform(p) {
+    return ALLOWED_PLATFORMS.includes(p) ? p : 'unknown';
+}
+
 /* ===== Render Functions ===== */
 
 function renderLiveStreamCard(stream, index) {
     const parentDomain = window.location.hostname;
     const autoplay = index === 0 ? 1 : 0;
+    const platform = safePlatform(stream.platform);
+    const login = encodeURIComponent(stream.user_login || '');
 
     let embedSrc;
     let watchTitle;
-    if (stream.platform === 'youtube') {
-        embedSrc = `https://www.youtube.com/embed/${stream.video_id}?autoplay=${autoplay}&mute=1`;
+    if (platform === 'youtube') {
+        const videoId = encodeURIComponent(stream.video_id || '');
+        embedSrc = `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay}&mute=1`;
         watchTitle = 'Watch on YouTube';
     } else {
-        embedSrc = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${parentDomain}&muted=true&autoplay=${autoplay ? 'true' : 'false'}`;
+        embedSrc = `https://player.twitch.tv/?channel=${login}&parent=${parentDomain}&muted=true&autoplay=${autoplay ? 'true' : 'false'}`;
         watchTitle = 'Watch on Twitch';
     }
 
-    const gameTag = stream.game ? `<span class="stream-game">${stream.game}</span>` : '';
-    const platformTag = `<span class="stream-platform-tag platform-${stream.platform}">${stream.platform}</span>`;
+    const gameTag = stream.game ? `<span class="stream-game">${escapeHtml(stream.game)}</span>` : '';
+    const platformTag = `<span class="stream-platform-tag platform-${platform}">${escapeHtml(platform)}</span>`;
+    const channelUrl = escapeHtml(stream.channel_url || '#');
 
     return `
         <div class="stream-card stream-card-real">
@@ -139,11 +157,11 @@ function renderLiveStreamCard(stream, index) {
             </div>
             <div class="stream-info">
                 <div class="stream-avatar">
-                    <a href="${stream.channel_url}" target="_blank" rel="noopener" title="${watchTitle}">${stream.streamer.charAt(0)}</a>
+                    <a href="${channelUrl}" target="_blank" rel="noopener" title="${watchTitle}">${escapeHtml(stream.streamer.charAt(0))}</a>
                 </div>
                 <div class="stream-meta">
-                    <div class="stream-name">${stream.streamer} ${gameTag} ${platformTag}</div>
-                    <div class="stream-title">${stream.title}</div>
+                    <div class="stream-name">${escapeHtml(stream.streamer)} ${gameTag} ${platformTag}</div>
+                    <div class="stream-title">${escapeHtml(stream.title)}</div>
                 </div>
                 <div class="stream-viewers">${stream.viewers.toLocaleString()} viewers</div>
             </div>
@@ -155,17 +173,19 @@ function renderStreamerCard(streamer, liveData) {
     const isLive = !!liveData;
     const statusClass = isLive ? 'online' : '';
     const liveBadge = isLive ? '<span class="streamer-live-badge">LIVE</span>' : '';
+    const viewers = isLive ? Number(liveData.viewers) || 0 : 0;
     const statusText = isLive
-        ? `<div class="streamer-viewers-tag">${liveData.viewers.toLocaleString()} viewers</div>`
+        ? `<div class="streamer-viewers-tag">${viewers.toLocaleString()} viewers</div>`
         : '<div class="streamer-viewers-tag offline-text">Offline</div>';
 
+    const platform = safePlatform(streamer.platform);
     const avatarImg = streamer.avatarUrl
-        ? `<img src="${streamer.avatarUrl}" alt="${streamer.displayName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
-        : streamer.avatar;
+        ? `<img src="${escapeHtml(streamer.avatarUrl)}" alt="${escapeHtml(streamer.displayName)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+        : escapeHtml(streamer.avatar);
 
-    const socialsHtml = Object.entries(streamer.socials).map(([platform, url]) => `
-        <a href="${url}" class="social-link" title="${platform}" target="_blank" rel="noopener">
-            ${SOCIAL_ICONS[platform] || ''}
+    const socialsHtml = Object.entries(streamer.socials).map(([p, url]) => `
+        <a href="${escapeHtml(url)}" class="social-link" title="${escapeHtml(p)}" target="_blank" rel="noopener">
+            ${SOCIAL_ICONS[p] || ''}
         </a>
     `).join('');
 
@@ -178,12 +198,12 @@ function renderStreamerCard(streamer, liveData) {
                     <span class="streamer-status-dot ${statusClass}"></span>
                 </div>
                 <div>
-                    <div class="streamer-name">${streamer.displayName}</div>
-                    <span class="streamer-platform platform-${streamer.platform}">${streamer.platform}</span>
+                    <div class="streamer-name">${escapeHtml(streamer.displayName)}</div>
+                    <span class="streamer-platform platform-${platform}">${escapeHtml(platform)}</span>
                 </div>
             </div>
             <div class="streamer-body">
-                <p class="streamer-bio">${streamer.bio}</p>
+                <p class="streamer-bio">${escapeHtml(streamer.bio)}</p>
                 ${statusText}
                 <div class="streamer-socials">${socialsHtml}</div>
             </div>
