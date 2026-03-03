@@ -104,9 +104,21 @@ const SOCIAL_ICONS = {
 
 function renderLiveStreamCard(stream, index) {
     const parentDomain = window.location.hostname;
-    const autoplay = index === 0 ? 'true' : 'false';
-    const embedSrc = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${parentDomain}&muted=true&autoplay=${autoplay}`;
+    const autoplay = index === 0 ? 1 : 0;
+
+    let embedSrc;
+    let watchTitle;
+    if (stream.platform === 'youtube') {
+        embedSrc = `https://www.youtube.com/embed/${stream.video_id}?autoplay=${autoplay}&mute=1`;
+        watchTitle = 'Watch on YouTube';
+    } else {
+        embedSrc = `https://player.twitch.tv/?channel=${stream.user_login}&parent=${parentDomain}&muted=true&autoplay=${autoplay ? 'true' : 'false'}`;
+        watchTitle = 'Watch on Twitch';
+    }
+
     const gameTag = stream.game ? `<span class="stream-game">${stream.game}</span>` : '';
+    const platformTag = `<span class="stream-platform-tag platform-${stream.platform}">${stream.platform}</span>`;
+
     return `
         <div class="stream-card stream-card-real">
             <div class="stream-embed stream-embed-real">
@@ -118,10 +130,10 @@ function renderLiveStreamCard(stream, index) {
             </div>
             <div class="stream-info">
                 <div class="stream-avatar">
-                    <a href="${stream.channel_url}" target="_blank" rel="noopener" title="Watch on Twitch">${stream.streamer.charAt(0)}</a>
+                    <a href="${stream.channel_url}" target="_blank" rel="noopener" title="${watchTitle}">${stream.streamer.charAt(0)}</a>
                 </div>
                 <div class="stream-meta">
-                    <div class="stream-name">${stream.streamer} ${gameTag}</div>
+                    <div class="stream-name">${stream.streamer} ${gameTag} ${platformTag}</div>
                     <div class="stream-title">${stream.title}</div>
                 </div>
                 <div class="stream-viewers">${stream.viewers.toLocaleString()} viewers</div>
@@ -196,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* Build a fingerprint of current live state to detect changes */
     function liveFingerprint() {
-        return liveStreams.map(s => s.user_login).sort().join(',');
+        return liveStreams.map(s => `${s.platform}:${s.user_login}`).sort().join(',');
     }
 
     /* Sort streamers alphabetically (stable, computed once) */

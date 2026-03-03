@@ -390,6 +390,20 @@ body {
     white-space: nowrap;
 }
 
+.stream-platform-tag {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    margin-left: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+}
+
+.stream-platform-tag.platform-twitch { background: #9146ff; color: #fff; }
+.stream-platform-tag.platform-youtube { background: #ff0000; color: #fff; }
+
 /* ===== STREAMER PROFILE CARDS ===== */
 .streamers-grid {
     display: grid;
