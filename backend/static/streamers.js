@@ -90,6 +90,15 @@ const STREAMERS = [
         platform: "twitch",
         bio: "US Navy streamer. Your help is appreciated — please subscribe and share!",
         socials: { twitch: "https://www.twitch.tv/john_weak_tv" }
+    },
+    {
+        name: "BossHooHoo",
+        displayName: "Hoo Hoo",
+        avatar: "H",
+        avatarUrl: "https://yt3.ggpht.com/jJ-nO8hJbgQVbcJyUQBRmEz-COjmTa2hti_Ap23_ARbe9VEQkqsT0MbqpzQyozfLuI33eo0EXg=s800-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "I don't play games casually. It's either I'm not interested or play for 16 hours and forget to eat.",
+        socials: { youtube: "https://www.youtube.com/@BossHooHoo" }
     }
 ];
 
