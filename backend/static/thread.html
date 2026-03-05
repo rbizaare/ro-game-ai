@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thread — RO PH Community Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/forum.css">
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">RO PH Hub</a>
+        <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+        <ul class="nav-links">
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/streamers">Streamers</a></li>
+            <li><a href="/servers">Servers</a></li>
+            <li><a href="/forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <!-- Thread Content -->
+    <section>
+        <div class="section">
+            <!-- Auth Bar -->
+            <div class="forum-auth" id="authBar"></div>
+
+            <!-- Breadcrumb -->
+            <div class="forum-breadcrumb" id="breadcrumb">
+                <a href="/forum">Forum</a> <span>/</span> <span>Loading...</span>
+            </div>
+
+            <!-- Thread Content -->
+            <div id="threadContent">
+                <div class="forum-empty">Loading thread...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
+        <p>Ragnarok Online &copy; Gravity Co., Ltd. &amp; Lee Myoungjin.</p>
+    </footer>
+
+    <script>
+    /* ===== Thread Page JavaScript ===== */
+
+    let _currentUser = null;
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+    }
+
+    function timeAgo(iso) {
+        if (!iso) return '';
+        const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+        return new Date(iso).toLocaleDateString();
+    }
+
+    async function fetchCurrentUser() {
+        try {
+            const res = await fetch('/api/auth/me');
+            _currentUser = await res.json();
+        } catch { _currentUser = null; }
+
+        const bar = document.getElementById('authBar');
+        if (_currentUser) {
+            bar.innerHTML = `
+                <div class="forum-auth-user">
+                    <img class="forum-auth-avatar" src="${escapeHtml(_currentUser.avatar_url)}" alt="">
+                    <span>${escapeHtml(_currentUser.display_name)}</span>
+                    ${_currentUser.is_admin ? '<span style="font-size:0.7rem;color:var(--ro-gold);font-weight:600;">ADMIN</span>' : ''}
+                </div>
+                <a href="/auth/logout" class="btn-logout">Sign Out</a>
+            `;
+        } else {
+            bar.innerHTML = `<a href="/auth/login" class="btn-google">Sign in with Google</a>`;
+        }
+    }
+
+    function getThreadId() {
+        const parts = window.location.pathname.split('/');
+        return parseInt(parts[parts.length - 1]) || 0;
+    }
+
+    async function loadThread() {
+        const threadId = getThreadId();
+        if (!threadId) {
+            document.getElementById('threadContent').innerHTML = '<div class="forum-empty">Thread not found.</div>';
+            return;
+        }
+
+        const page = parseInt(new URLSearchParams(window.location.search).get('page')) || 1;
+
+        try {
+            const res = await fetch(`/api/forum/threads/${threadId}?page=${page}`);
+            if (!res.ok) throw new Error('Not found');
+            const data = await res.json();
+            const t = data.thread;
+            const replies = data.replies;
+
+            document.title = `${t.title} — RO PH Community Hub`;
+
+            // Breadcrumb
+            document.getElementById('breadcrumb').innerHTML = `
+                <a href="/forum">Forum</a> <span>/</span>
+                <a href="/forum#category/${escapeHtml(t.category_slug)}">${escapeHtml(t.category_name)}</a> <span>/</span>
+                <span>${escapeHtml(t.title)}</span>
+            `;
+
+            // Admin controls
+            let adminHtml = '';
+            if (_currentUser && _currentUser.is_admin) {
+                adminHtml = `
+                    <div class="thread-admin-controls">
+                        <button class="btn-admin ${t.is_pinned ? 'active' : ''}" onclick="togglePin(${t.id})">
+                            ${t.is_pinned ? 'Unpin' : 'Pin'}
+                        </button>
+                        <button class="btn-admin ${t.is_locked ? 'active' : ''}" onclick="toggleLock(${t.id})">
+                            ${t.is_locked ? 'Unlock' : 'Lock'}
+                        </button>
+                        <button class="btn-admin btn-admin-danger" onclick="deleteThread(${t.id}, '${escapeHtml(t.category_slug)}')">
+                            Delete Thread
+                        </button>
+                    </div>
+                `;
+            }
+
+            // OP
+            const opHtml = `
+                ${adminHtml}
+                <div class="thread-op">
+                    <div class="thread-op-header">
+                        <img class="thread-op-avatar" src="${escapeHtml(t.author_avatar)}" alt="" onerror="this.style.display='none'">
+                        <div class="thread-op-meta">
+                            <div class="thread-op-author">${escapeHtml(t.author_name)}</div>
+                            <div class="thread-op-time">${timeAgo(t.created_at)}</div>
+                        </div>
+                    </div>
+                    <div class="thread-op-body">${escapeHtml(t.body)}</div>
+                </div>
+            `;
+
+            // Replies
+            let repliesHtml = '';
+            if (replies.items.length) {
+                repliesHtml = `<h3 class="thread-replies-title">${replies.total} ${replies.total === 1 ? 'Reply' : 'Replies'}</h3>`;
+                repliesHtml += replies.items.map(r => `
+                    <div class="thread-reply">
+                        <div class="thread-reply-header">
+                            <img class="thread-reply-avatar" src="${escapeHtml(r.author_avatar)}" alt="" onerror="this.style.display='none'">
+                            <span class="thread-reply-author">${escapeHtml(r.author_name)}</span>
+                            <span class="thread-reply-time">${timeAgo(r.created_at)}</span>
+                            ${_currentUser && _currentUser.is_admin ? `<button class="btn-admin btn-admin-danger thread-reply-delete" onclick="deleteReply(${r.id})">Delete</button>` : ''}
+                        </div>
+                        <div class="thread-reply-body">${escapeHtml(r.body)}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(replies.total / replies.per_page);
+            let paginationHtml = '';
+            if (totalPages > 1) {
+                paginationHtml = '<div class="forum-pagination">';
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHtml += `<a class="forum-page-btn ${i === page ? 'active' : ''}" href="/forum/thread/${t.id}?page=${i}">${i}</a>`;
+                }
+                paginationHtml += '</div>';
+            }
+
+            // Reply form
+            let replyFormHtml = '';
+            if (_currentUser && !t.is_locked) {
+                replyFormHtml = `
+                    <div class="thread-reply-form">
+                        <h3>Post a Reply</h3>
+                        <textarea class="forum-input forum-textarea" id="replyBody" placeholder="Write your reply..." maxlength="10000"></textarea>
+                        <div class="forum-form-actions">
+                            <button class="btn-submit" id="submitReply" onclick="submitReply(${t.id})">Post Reply</button>
+                        </div>
+                    </div>
+                `;
+            } else if (t.is_locked) {
+                replyFormHtml = '<div class="forum-login-prompt">This thread is locked. No new replies can be posted.</div>';
+            } else {
+                replyFormHtml = '<div class="forum-login-prompt"><a href="/auth/login">Sign in with Google</a> to post a reply.</div>';
+            }
+
+            document.getElementById('threadContent').innerHTML = opHtml + repliesHtml + paginationHtml + replyFormHtml;
+
+        } catch {
+            document.getElementById('threadContent').innerHTML = '<div class="forum-empty">Thread not found or failed to load.</div>';
+        }
+    }
+
+    async function submitReply(threadId) {
+        const body = document.getElementById('replyBody').value.trim();
+        const btn = document.getElementById('submitReply');
+        if (!body) return alert('Reply cannot be empty.');
+
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+
+        try {
+            const res = await fetch(`/api/forum/threads/${threadId}/replies`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ body }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Failed to post reply');
+            }
+            window.location.reload();
+        } catch (e) {
+            alert(e.message);
+            btn.disabled = false;
+            btn.textContent = 'Post Reply';
+        }
+    }
+
+    async function togglePin(threadId) {
+        await fetch(`/api/forum/threads/${threadId}/pin`, { method: 'POST' });
+        window.location.reload();
+    }
+
+    async function toggleLock(threadId) {
+        await fetch(`/api/forum/threads/${threadId}/lock`, { method: 'POST' });
+        window.location.reload();
+    }
+
+    async function deleteThread(threadId, categorySlug) {
+        if (!confirm('Are you sure you want to delete this thread and all its replies?')) return;
+        await fetch(`/api/forum/threads/${threadId}`, { method: 'DELETE' });
+        window.location.href = `/forum#category/${categorySlug}`;
+    }
+
+    async function deleteReply(replyId) {
+        if (!confirm('Delete this reply?')) return;
+        await fetch(`/api/forum/replies/${replyId}`, { method: 'DELETE' });
+        window.location.reload();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await fetchCurrentUser();
+        await loadThread();
+    });
+    </script>
+</body>
+</html>

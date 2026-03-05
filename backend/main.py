@@ -17,6 +17,9 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from ai_helper import get_top_monsters_by_exp, ask_ai_hybrid, detect_intent
 from chat_logger import log_chat, get_logs as get_chat_logs
+from auth import auth_router
+from forum_api import forum_router
+from forum_db import init_forum_db
 import httpx
 import sqlite3
 DB_PATH = os.path.join(BASE_DIR, "game.db")
@@ -55,6 +58,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
+# Initialize forum database
+init_forum_db()
+
+# Include forum and auth routers
+app.include_router(auth_router)
+app.include_router(forum_router)
+
 # Serve static frontend files (CSS, JS)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
@@ -81,6 +91,16 @@ def streamers_page():
 @app.get("/servers")
 def servers_page():
     return FileResponse(os.path.join(BASE_DIR, "static", "servers-page.html"))
+
+
+@app.get("/forum")
+def forum_page():
+    return FileResponse(os.path.join(BASE_DIR, "static", "forum.html"))
+
+
+@app.get("/forum/thread/{thread_id}")
+def thread_page(thread_id: int):
+    return FileResponse(os.path.join(BASE_DIR, "static", "thread.html"))
 
 
 @app.get("/monsters")

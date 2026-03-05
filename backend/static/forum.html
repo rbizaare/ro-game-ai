@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum — RO PH Community Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/forum.css">
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">RO PH Hub</a>
+        <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+        <ul class="nav-links">
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/streamers">Streamers</a></li>
+            <li><a href="/servers">Servers</a></li>
+            <li><a href="/forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="hero" style="padding: 2rem 1.5rem;">
+        <h1 style="font-size: 1.1rem;">Community Forum</h1>
+        <p>Discuss everything about Ragnarok Online PH — streamers, servers, and more.</p>
+    </section>
+
+    <!-- Forum Content -->
+    <section>
+        <div class="section">
+            <!-- Auth Bar -->
+            <div class="forum-auth" id="authBar"></div>
+
+            <!-- Breadcrumb (hidden on category view) -->
+            <div class="forum-breadcrumb" id="breadcrumb" style="display:none;"></div>
+
+            <!-- Main Content Area -->
+            <div id="forumContent">
+                <div class="forum-empty">Loading forum...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
+        <p>Ragnarok Online &copy; Gravity Co., Ltd. &amp; Lee Myoungjin.</p>
+    </footer>
+
+    <script src="/static/forum.js"></script>
+</body>
+</html>
