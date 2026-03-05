@@ -211,6 +211,129 @@ function renderStreamerCard(streamer, liveData) {
     `;
 }
 
+/* ===== Leaderboard ===== */
+
+let _leaderboardEntries = [];
+let _currentSort = 'hours';
+
+function sortLeaderboard(metric) {
+    _currentSort = metric;
+    document.getElementById('sortHours').className = 'btn-toggle' + (metric === 'hours' ? ' active' : '');
+    document.getElementById('sortStreams').className = 'btn-toggle' + (metric === 'streams' ? ' active' : '');
+    document.getElementById('sortViews').className = 'btn-toggle' + (metric === 'views' ? ' active' : '');
+    renderLeaderboardTable(_leaderboardEntries, metric);
+}
+
+function renderLeaderboardTable(entries, sortMetric) {
+    const wrapper = document.getElementById('leaderboardWrapper');
+    if (!wrapper) return;
+
+    if (!entries || entries.length === 0) {
+        wrapper.innerHTML = '<div class="leaderboard-empty">No leaderboard data available.</div>';
+        return;
+    }
+
+    const keyMap = { hours: 'total_hours', streams: 'streams', views: 'total_views' };
+    const key = keyMap[sortMetric] || 'total_hours';
+    const sorted = [...entries].sort((a, b) => {
+        const av = a[key] !== null && a[key] !== undefined ? a[key] : -1;
+        const bv = b[key] !== null && b[key] !== undefined ? b[key] : -1;
+        return bv - av;
+    });
+
+    const rowsHtml = sorted.map((entry, i) => {
+        const rank = i + 1;
+        const medal = rank === 1 ? '<span class="lb-medal gold">1</span>'
+                    : rank === 2 ? '<span class="lb-medal silver">2</span>'
+                    : rank === 3 ? '<span class="lb-medal bronze">3</span>'
+                    : `<span class="lb-rank-num">#${rank}</span>`;
+        const platform = safePlatform(entry.platform);
+
+        const avatarHtml = entry.avatar_url
+            ? `<img src="${escapeHtml(entry.avatar_url)}" alt="${escapeHtml(entry.name)}" class="lb-avatar-img" onerror="this.style.display='none'">`
+            : '';
+
+        const streamsCell = entry.streams !== null && entry.streams !== undefined
+            ? entry.streams.toLocaleString()
+            : '<span class="lb-na">—</span>';
+
+        const hoursCell = entry.total_hours !== null && entry.total_hours !== undefined
+            ? `${entry.total_hours.toLocaleString(undefined, {maximumFractionDigits: 1})}h`
+            : '<span class="lb-na">—</span>';
+
+        const viewsCell = entry.total_views !== null && entry.total_views !== undefined
+            ? entry.total_views.toLocaleString()
+            : '<span class="lb-na">—</span>';
+
+        const sourceLabel = entry.data_source === 'youtube_channel_stats'
+            ? '<span class="lb-source-tag">Channel Stats</span>'
+            : '';
+
+        const channelUrl = escapeHtml(entry.channel_url || '#');
+
+        return `<tr class="lb-row ${rank <= 3 ? 'lb-row-top' : ''}">
+            <td class="lb-col-rank">${medal}</td>
+            <td class="lb-col-name">
+                <div class="lb-name-cell">
+                    <div class="lb-avatar">${avatarHtml}<span class="lb-avatar-placeholder">${escapeHtml(entry.name.charAt(0))}</span></div>
+                    <div>
+                        <a href="${channelUrl}" target="_blank" rel="noopener" class="lb-name-link">${escapeHtml(entry.name)}</a>
+                        <span class="lb-platform-tag platform-${platform}">${escapeHtml(platform)}</span>
+                        ${sourceLabel}
+                    </div>
+                </div>
+            </td>
+            <td class="lb-col-stat ${sortMetric === 'streams' ? 'lb-active-col' : ''}">${streamsCell}</td>
+            <td class="lb-col-stat ${sortMetric === 'hours' ? 'lb-active-col' : ''}">${hoursCell}</td>
+            <td class="lb-col-stat ${sortMetric === 'views' ? 'lb-active-col' : ''}">${viewsCell}</td>
+        </tr>`;
+    }).join('');
+
+    wrapper.innerHTML = `
+        <div class="leaderboard-table-wrap">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th class="lb-col-rank">Rank</th>
+                        <th class="lb-col-name">Streamer</th>
+                        <th class="lb-col-stat ${sortMetric === 'streams' ? 'lb-active-col' : ''}">Streams</th>
+                        <th class="lb-col-stat ${sortMetric === 'hours' ? 'lb-active-col' : ''}">Hours</th>
+                        <th class="lb-col-stat ${sortMetric === 'views' ? 'lb-active-col' : ''}">Views</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </div>`;
+}
+
+async function fetchLeaderboard() {
+    try {
+        const resp = await fetch('/api/leaderboard');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        _leaderboardEntries = data.entries || [];
+
+        const subtitle = document.getElementById('leaderboardSubtitle');
+        if (subtitle && data.month) {
+            const [yr, mo] = data.month.split('-');
+            const label = new Date(yr, mo - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+            subtitle.textContent = `VOD stats for ${label}`;
+        }
+
+        const loading = document.getElementById('leaderboardLoading');
+        if (loading) loading.style.display = 'none';
+
+        const controls = document.getElementById('leaderboardControls');
+        if (controls) controls.style.display = 'flex';
+
+        renderLeaderboardTable(_leaderboardEntries, _currentSort);
+    } catch (e) {
+        const wrapper = document.getElementById('leaderboardWrapper');
+        if (wrapper) wrapper.innerHTML = '<div class="leaderboard-empty">Could not load leaderboard. Please try again later.</div>';
+    }
+}
+
 /* ===== Initialize on Page Load ===== */
 document.addEventListener('DOMContentLoaded', () => {
     const streamsGrid = document.getElementById('streamsGrid');
@@ -294,6 +417,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     init();
+
+    /* Leaderboard sort buttons */
+    const sortHoursBtn = document.getElementById('sortHours');
+    const sortStreamsBtn = document.getElementById('sortStreams');
+    const sortViewsBtn = document.getElementById('sortViews');
+    if (sortHoursBtn) sortHoursBtn.addEventListener('click', () => sortLeaderboard('hours'));
+    if (sortStreamsBtn) sortStreamsBtn.addEventListener('click', () => sortLeaderboard('streams'));
+    if (sortViewsBtn) sortViewsBtn.addEventListener('click', () => sortLeaderboard('views'));
+
+    /* Fetch leaderboard if on streamers page */
+    if (document.getElementById('leaderboardWrapper')) {
+        fetchLeaderboard();
+    }
 
     /* Carousel scroll buttons */
     function initCarousel(track) {

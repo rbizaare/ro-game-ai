@@ -707,6 +707,213 @@ body {
     line-height: 1.5;
 }
 
+/* ===== LEADERBOARD ===== */
+
+.leaderboard-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.btn-toggle {
+    padding: 0.5rem 1.1rem;
+    border: 1px solid rgba(139, 105, 20, 0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    background: #fff;
+    color: var(--ro-brown-medium);
+}
+
+.btn-toggle:hover {
+    background: var(--ro-parchment);
+    border-color: var(--ro-gold);
+}
+
+.btn-toggle.active {
+    background: var(--ro-gold);
+    color: #fff;
+    border-color: var(--ro-gold);
+}
+
+.leaderboard-table-wrap {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(58, 31, 4, 0.1);
+    border: 1px solid rgba(139, 105, 20, 0.15);
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table th {
+    background: var(--ro-parchment);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ro-text-light);
+    border-bottom: 2px solid rgba(139, 105, 20, 0.2);
+    font-family: 'Cinzel', serif;
+}
+
+.leaderboard-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0ebe0;
+    font-size: 0.88rem;
+    vertical-align: middle;
+}
+
+.lb-row:hover td {
+    background: var(--ro-parchment-light);
+}
+
+.lb-row-top td {
+    background: rgba(212, 168, 67, 0.05);
+}
+
+.lb-row-top:hover td {
+    background: rgba(212, 168, 67, 0.1);
+}
+
+.lb-col-rank {
+    width: 56px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.lb-col-name {
+    min-width: 180px;
+}
+
+.lb-col-stat {
+    width: 110px;
+    text-align: right;
+    font-weight: 600;
+    color: var(--ro-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.lb-active-col {
+    color: var(--ro-gold);
+    background: rgba(212, 168, 67, 0.06);
+}
+
+.leaderboard-table th.lb-active-col {
+    color: var(--ro-gold);
+    background: rgba(212, 168, 67, 0.12);
+}
+
+.lb-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lb-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--ro-gold);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(139, 105, 20, 0.2);
+    position: relative;
+}
+
+.lb-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+}
+
+.lb-avatar-placeholder {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.lb-name-link {
+    font-weight: 600;
+    color: var(--ro-brown);
+    text-decoration: none;
+    font-size: 0.92rem;
+    display: block;
+    line-height: 1.3;
+}
+
+.lb-name-link:hover {
+    color: var(--ro-gold);
+    text-decoration: underline;
+}
+
+.lb-platform-tag {
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+.lb-source-tag {
+    font-size: 0.65rem;
+    color: var(--ro-text-light);
+    font-style: italic;
+    vertical-align: middle;
+}
+
+.lb-na {
+    color: var(--ro-text-light);
+    font-weight: 400;
+    font-style: italic;
+}
+
+.lb-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.lb-medal.gold { background: linear-gradient(135deg, #ffd700, #daa520); }
+.lb-medal.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); }
+.lb-medal.bronze { background: linear-gradient(135deg, #cd7f32, #b87333); }
+
+.lb-rank-num {
+    font-size: 0.85rem;
+    color: var(--ro-text-light);
+    font-weight: 600;
+}
+
+.leaderboard-loading,
+.leaderboard-empty {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--ro-text-light);
+    font-size: 0.95rem;
+}
+
 /* ===== EMPTY STATES ===== */
 .empty-streams {
     text-align: center;
@@ -781,5 +988,32 @@ body {
 
     .section {
         padding: 2rem 1rem;
+    }
+
+    .lb-col-stat {
+        width: 70px;
+        font-size: 0.8rem;
+        padding: 0.6rem 0.5rem;
+    }
+
+    .lb-col-rank {
+        width: 36px;
+        font-size: 0.9rem;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 0.6rem 0.5rem;
+    }
+
+    .lb-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .lb-medal {
+        width: 24px;
+        height: 24px;
+        font-size: 0.65rem;
     }
 }

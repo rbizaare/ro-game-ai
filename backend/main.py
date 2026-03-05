@@ -1,6 +1,8 @@
 import os
+import re
 import sys
 import time
+from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
@@ -31,6 +33,7 @@ YOUTUBE_CHANNELS = [s.strip() for s in os.getenv("YOUTUBE_CHANNELS", "").split("
 # Cache for Twitch app token and live stream data
 _twitch_token: dict = {"token": "", "expires": 0}
 _live_cache: dict = {"data": None, "expires": 0}
+_leaderboard_cache: dict = {"data": None, "month": "", "expires": 0}
 
 app = FastAPI()
 
@@ -266,6 +269,191 @@ def _fetch_youtube_streams() -> list:
                 s["viewers"] = viewers_map.get(s.get("video_id", ""), 0)
 
     return streams
+
+
+def _parse_twitch_duration(duration: str) -> float:
+    """Convert Twitch duration string '2h12m4s' to decimal hours."""
+    h = int(m.group(1)) if (m := re.search(r'(\d+)h', duration)) else 0
+    mi = int(m.group(1)) if (m := re.search(r'(\d+)m', duration)) else 0
+    s = int(m.group(1)) if (m := re.search(r'(\d+)s', duration)) else 0
+    return h + mi / 60 + s / 3600
+
+
+def _fetch_twitch_vod_stats(started_after: str) -> list:
+    """Fetch VOD archive stats for all TWITCH_STREAMERS since started_after (ISO8601)."""
+    if not TWITCH_CLIENT_ID or not TWITCH_CLIENT_SECRET or not TWITCH_STREAMERS:
+        return []
+
+    token = get_twitch_token()
+    headers = {
+        "Client-ID": TWITCH_CLIENT_ID,
+        "Authorization": f"Bearer {token}",
+    }
+
+    results = []
+    with httpx.Client(timeout=15) as client:
+        # Batch-resolve user IDs
+        resp = client.get(
+            "https://api.twitch.tv/helix/users",
+            params=[("login", name) for name in TWITCH_STREAMERS],
+            headers=headers,
+        )
+        users = {u["login"].lower(): u for u in resp.json().get("data", [])}
+
+        for login_lower, user in users.items():
+            user_id = user["id"]
+            total_streams = 0
+            total_hours = 0.0
+            total_views = 0
+            cursor = None
+
+            while True:
+                params = {"user_id": user_id, "type": "archive", "first": 100}
+                if cursor:
+                    params["after"] = cursor
+
+                vresp = client.get(
+                    "https://api.twitch.tv/helix/videos",
+                    params=params,
+                    headers=headers,
+                )
+                vdata = vresp.json()
+                videos = vdata.get("data", [])
+                if not videos:
+                    break
+
+                hit_old = False
+                for v in videos:
+                    # VODs are newest-first; stop when older than cutoff
+                    if v.get("created_at", "") < started_after:
+                        hit_old = True
+                        break
+                    total_streams += 1
+                    total_hours += _parse_twitch_duration(v.get("duration", "0s"))
+                    total_views += v.get("view_count", 0)
+
+                if hit_old:
+                    break
+                cursor = vdata.get("pagination", {}).get("cursor")
+                if not cursor:
+                    break
+
+            results.append({
+                "login": login_lower,
+                "name": user["display_name"],
+                "avatar_url": user.get("profile_image_url", ""),
+                "channel_url": f"https://www.twitch.tv/{login_lower}",
+                "platform": "twitch",
+                "streams": total_streams,
+                "total_hours": round(total_hours, 2),
+                "total_views": total_views,
+                "data_source": "twitch_vods",
+            })
+
+    return results
+
+
+def _fetch_youtube_channel_stats() -> list:
+    """Fetch channel-level statistics for all YOUTUBE_CHANNELS."""
+    if not YOUTUBE_API_KEY or not YOUTUBE_CHANNELS:
+        return []
+
+    results = []
+    with httpx.Client(timeout=10) as client:
+        for entry in YOUTUBE_CHANNELS:
+            parts = entry.split(":", 1)
+            channel_id = parts[0]
+            handle = parts[1] if len(parts) > 1 else channel_id
+
+            resp = client.get(
+                "https://www.googleapis.com/youtube/v3/channels",
+                params={
+                    "part": "snippet,statistics",
+                    "id": channel_id,
+                    "key": YOUTUBE_API_KEY,
+                },
+            )
+            data = resp.json()
+            items = data.get("items", [])
+            if not items:
+                continue
+
+            item = items[0]
+            snippet = item.get("snippet", {})
+            stats = item.get("statistics", {})
+
+            results.append({
+                "login": handle,
+                "name": snippet.get("title", handle),
+                "avatar_url": snippet.get("thumbnails", {}).get("medium", {}).get("url", ""),
+                "channel_url": f"https://www.youtube.com/channel/{channel_id}",
+                "platform": "youtube",
+                "streams": None,
+                "total_hours": None,
+                "total_views": int(stats.get("viewCount", 0)),
+                "subscriber_count": int(stats.get("subscriberCount", 0)),
+                "data_source": "youtube_channel_stats",
+            })
+
+    return results
+
+
+@app.get("/api/leaderboard")
+def api_leaderboard(month: str = ""):
+    """Monthly streamer leaderboard. Optional ?month=YYYY-MM param."""
+    now = time.time()
+
+    if not month:
+        today = datetime.now(timezone.utc)
+        month = today.strftime("%Y-%m")
+
+    # Validate format
+    try:
+        year, mon = month.split("-")
+        year, mon = int(year), int(mon)
+        if not (1 <= mon <= 12):
+            raise ValueError
+    except (ValueError, AttributeError):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.")
+
+    # Check cache
+    if (
+        _leaderboard_cache["data"] is not None
+        and _leaderboard_cache.get("month") == month
+        and now < _leaderboard_cache["expires"]
+    ):
+        return _leaderboard_cache["data"]
+
+    started_after = f"{year:04d}-{mon:02d}-01T00:00:00Z"
+    entries = []
+
+    try:
+        entries.extend(_fetch_twitch_vod_stats(started_after))
+    except Exception:
+        pass
+
+    try:
+        entries.extend(_fetch_youtube_channel_stats())
+    except Exception:
+        pass
+
+    # Sort by total_hours descending (nulls last)
+    entries.sort(key=lambda e: e.get("total_hours") if e.get("total_hours") is not None else -1, reverse=True)
+    for i, entry in enumerate(entries):
+        entry["rank"] = i + 1
+
+    result = {
+        "month": month,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "entries": entries,
+    }
+
+    _leaderboard_cache["data"] = result
+    _leaderboard_cache["month"] = month
+    _leaderboard_cache["expires"] = now + 900  # 15 minutes
+
+    return result
 
 
 @app.get("/api/live-streams")
