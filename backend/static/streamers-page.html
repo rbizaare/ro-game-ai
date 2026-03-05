@@ -18,15 +18,15 @@
         <h1 style="font-size: 1.1rem;">Streamers</h1>
         <p>The full lineup of Filipino Ragnarok Online content creators.</p>
         <p id="streamerCount" style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 0;"></p>
+        <div class="hero-buttons" style="margin-top: 1rem;">
+            <a href="#leaderboard" class="btn-primary">View Monthly Leaderboard</a>
+        </div>
     </section>
 
     <!-- All Streamer Profiles -->
     <section>
         <div class="section">
             <div class="streamers-grid" id="allStreamersGrid"></div>
-            <div class="section-cta">
-                <a href="/" class="btn-secondary" style="color: var(--ro-brown); border-color: var(--ro-gold);">Back to Home</a>
-            </div>
         </div>
     </section>
 
@@ -38,12 +38,14 @@
 
             <div class="leaderboard-controls" id="leaderboardControls" style="display:none;">
                 <button class="btn-toggle active" id="sortHours">Hours</button>
-                <button class="btn-toggle" id="sortStreams">Streams</button>
                 <button class="btn-toggle" id="sortViews">Views</button>
             </div>
 
             <div id="leaderboardWrapper">
                 <div class="leaderboard-loading" id="leaderboardLoading">Loading leaderboard...</div>
+            </div>
+            <div class="section-cta">
+                <a href="/" class="btn-secondary" style="color: var(--ro-brown); border-color: var(--ro-gold);">Back to Home</a>
             </div>
         </div>
     </section>

@@ -219,7 +219,6 @@ let _currentSort = 'hours';
 function sortLeaderboard(metric) {
     _currentSort = metric;
     document.getElementById('sortHours').className = 'btn-toggle' + (metric === 'hours' ? ' active' : '');
-    document.getElementById('sortStreams').className = 'btn-toggle' + (metric === 'streams' ? ' active' : '');
     document.getElementById('sortViews').className = 'btn-toggle' + (metric === 'views' ? ' active' : '');
     renderLeaderboardTable(_leaderboardEntries, metric);
 }
@@ -253,10 +252,6 @@ function renderLeaderboardTable(entries, sortMetric) {
             ? `<img src="${escapeHtml(entry.avatar_url)}" alt="${escapeHtml(entry.name)}" class="lb-avatar-img" onerror="this.style.display='none'">`
             : '';
 
-        const streamsCell = entry.streams !== null && entry.streams !== undefined
-            ? entry.streams.toLocaleString()
-            : '<span class="lb-na">—</span>';
-
         const hoursCell = entry.total_hours !== null && entry.total_hours !== undefined
             ? `${entry.total_hours.toLocaleString(undefined, {maximumFractionDigits: 1})}h`
             : '<span class="lb-na">—</span>';
@@ -283,7 +278,6 @@ function renderLeaderboardTable(entries, sortMetric) {
                     </div>
                 </div>
             </td>
-            <td class="lb-col-stat ${sortMetric === 'streams' ? 'lb-active-col' : ''}">${streamsCell}</td>
             <td class="lb-col-stat ${sortMetric === 'hours' ? 'lb-active-col' : ''}">${hoursCell}</td>
             <td class="lb-col-stat ${sortMetric === 'views' ? 'lb-active-col' : ''}">${viewsCell}</td>
         </tr>`;
@@ -296,7 +290,6 @@ function renderLeaderboardTable(entries, sortMetric) {
                     <tr>
                         <th class="lb-col-rank">Rank</th>
                         <th class="lb-col-name">Streamer</th>
-                        <th class="lb-col-stat ${sortMetric === 'streams' ? 'lb-active-col' : ''}">Streams</th>
                         <th class="lb-col-stat ${sortMetric === 'hours' ? 'lb-active-col' : ''}">Hours</th>
                         <th class="lb-col-stat ${sortMetric === 'views' ? 'lb-active-col' : ''}">Views</th>
                     </tr>
@@ -420,10 +413,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* Leaderboard sort buttons */
     const sortHoursBtn = document.getElementById('sortHours');
-    const sortStreamsBtn = document.getElementById('sortStreams');
     const sortViewsBtn = document.getElementById('sortViews');
     if (sortHoursBtn) sortHoursBtn.addEventListener('click', () => sortLeaderboard('hours'));
-    if (sortStreamsBtn) sortStreamsBtn.addEventListener('click', () => sortLeaderboard('streams'));
     if (sortViewsBtn) sortViewsBtn.addEventListener('click', () => sortLeaderboard('views'));
 
     /* Fetch leaderboard if on streamers page */
