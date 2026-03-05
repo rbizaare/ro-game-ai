@@ -398,6 +398,18 @@ def _fetch_youtube_channel_stats() -> list:
     return results
 
 
+@app.get("/api/debug-yt")
+def debug_yt():
+    """Temporary debug endpoint to check YouTube config on Railway."""
+    return {
+        "youtube_api_key_set": bool(YOUTUBE_API_KEY),
+        "youtube_api_key_length": len(YOUTUBE_API_KEY),
+        "youtube_channels_raw": os.getenv("YOUTUBE_CHANNELS", ""),
+        "youtube_channels_parsed": YOUTUBE_CHANNELS,
+        "youtube_channels_count": len(YOUTUBE_CHANNELS),
+    }
+
+
 @app.get("/api/leaderboard")
 def api_leaderboard(month: str = ""):
     """Monthly streamer leaderboard. Optional ?month=YYYY-MM param."""
@@ -430,13 +442,13 @@ def api_leaderboard(month: str = ""):
 
     try:
         entries.extend(_fetch_twitch_vod_stats(started_after))
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[leaderboard] Twitch VOD fetch error: {e}")
 
     try:
         entries.extend(_fetch_youtube_channel_stats())
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[leaderboard] YouTube channel stats error: {e}")
 
     # Sort by total_hours descending (nulls last)
     entries.sort(key=lambda e: e.get("total_hours") if e.get("total_hours") is not None else -1, reverse=True)
