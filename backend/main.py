@@ -374,6 +374,8 @@ def _fetch_youtube_channel_stats() -> list:
                 },
             )
             data = resp.json()
+            if resp.status_code != 200:
+                print(f"[leaderboard] YouTube API error {resp.status_code}: {data}")
             items = data.get("items", [])
             if not items:
                 continue
@@ -401,13 +403,28 @@ def _fetch_youtube_channel_stats() -> list:
 @app.get("/api/debug-yt")
 def debug_yt():
     """Temporary debug endpoint to check YouTube config on Railway."""
-    return {
+    result = {
         "youtube_api_key_set": bool(YOUTUBE_API_KEY),
         "youtube_api_key_length": len(YOUTUBE_API_KEY),
         "youtube_channels_raw": os.getenv("YOUTUBE_CHANNELS", ""),
         "youtube_channels_parsed": YOUTUBE_CHANNELS,
         "youtube_channels_count": len(YOUTUBE_CHANNELS),
     }
+    # Try actual API call
+    if YOUTUBE_API_KEY and YOUTUBE_CHANNELS:
+        try:
+            parts = YOUTUBE_CHANNELS[0].split(":", 1)
+            channel_id = parts[0]
+            resp = httpx.get(
+                "https://www.googleapis.com/youtube/v3/channels",
+                params={"part": "snippet,statistics", "id": channel_id, "key": YOUTUBE_API_KEY},
+                timeout=10,
+            )
+            result["api_status"] = resp.status_code
+            result["api_response"] = resp.json()
+        except Exception as e:
+            result["api_error"] = str(e)
+    return result
 
 
 @app.get("/api/leaderboard")
