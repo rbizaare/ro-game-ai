@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -209,37 +210,73 @@ def _fetch_twitch_streams() -> list:
 
 
 def _fetch_youtube_streams() -> list:
-    """Fetch live streams from YouTube for tracked channels."""
+    """Fetch live streams from YouTube using RSS + Videos API (quota-efficient).
+
+    Instead of the Search API (100 units/call), this uses:
+    1. RSS feed (free) to get recent video IDs
+    2. Videos API (1 unit) to check which are currently live
+    """
     if not YOUTUBE_API_KEY or not YOUTUBE_CHANNELS:
         return []
 
     streams = []
+    video_ids = []
+    channel_map: dict = {}  # video_id -> (channel_id, handle)
+
     with httpx.Client(timeout=10) as client:
+        # Step 1: Fetch RSS feeds (free, no quota)
         for entry in YOUTUBE_CHANNELS:
-            # Format: "channelId:handle" or just "channelId"
             parts = entry.split(":", 1)
             channel_id = parts[0]
             handle = parts[1] if len(parts) > 1 else channel_id
 
-            resp = client.get(
-                "https://www.googleapis.com/youtube/v3/search",
-                params={
-                    "part": "snippet",
-                    "channelId": channel_id,
-                    "type": "video",
-                    "eventType": "live",
-                    "key": YOUTUBE_API_KEY,
-                },
-            )
-            data = resp.json()
+            try:
+                rss_resp = client.get(
+                    f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+                )
+                if rss_resp.status_code != 200:
+                    continue
 
-            for item in data.get("items", []):
-                video_id = item["id"].get("videoId", "")
-                snippet = item.get("snippet", {})
+                root = ET.fromstring(rss_resp.text)
+                ns = {"yt": "http://www.youtube.com/xml/schemas/2015",
+                      "atom": "http://www.w3.org/2005/Atom"}
+
+                for vid_entry in root.findall("atom:entry", ns)[:5]:
+                    vid_id_el = vid_entry.find("yt:videoId", ns)
+                    if vid_id_el is not None and vid_id_el.text:
+                        video_ids.append(vid_id_el.text)
+                        channel_map[vid_id_el.text] = (channel_id, handle)
+            except Exception:
+                continue
+
+        if not video_ids:
+            return []
+
+        # Step 2: Check which videos are live via Videos API (1 unit, batched)
+        resp = client.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={
+                "part": "snippet,liveStreamingDetails",
+                "id": ",".join(video_ids),
+                "key": YOUTUBE_API_KEY,
+            },
+        )
+        data = resp.json()
+
+        for item in data.get("items", []):
+            live_details = item.get("liveStreamingDetails", {})
+            snippet = item.get("snippet", {})
+
+            # Currently live: has actualStartTime but no actualEndTime
+            if live_details.get("actualStartTime") and not live_details.get("actualEndTime"):
+                video_id = item["id"]
+                channel_id, handle = channel_map.get(video_id, ("", ""))
+                viewers = int(live_details.get("concurrentViewers", 0))
+
                 streams.append({
                     "id": video_id,
                     "title": snippet.get("title", "Live Stream"),
-                    "viewers": 0,  # search API doesn't return viewer count
+                    "viewers": viewers,
                     "streamer": snippet.get("channelTitle", handle),
                     "user_login": handle,
                     "platform": "youtube",
@@ -248,25 +285,6 @@ def _fetch_youtube_streams() -> list:
                     "video_id": video_id,
                     "channel_url": f"https://www.youtube.com/channel/{channel_id}",
                 })
-
-        # Fetch concurrent viewer counts for live videos
-        video_ids = [s["video_id"] for s in streams if s.get("video_id")]
-        if video_ids:
-            resp = client.get(
-                "https://www.googleapis.com/youtube/v3/videos",
-                params={
-                    "part": "liveStreamingDetails",
-                    "id": ",".join(video_ids),
-                    "key": YOUTUBE_API_KEY,
-                },
-            )
-            vdata = resp.json()
-            viewers_map = {}
-            for v in vdata.get("items", []):
-                details = v.get("liveStreamingDetails", {})
-                viewers_map[v["id"]] = int(details.get("concurrentViewers", 0))
-            for s in streams:
-                s["viewers"] = viewers_map.get(s.get("video_id", ""), 0)
 
     return streams
 
@@ -398,33 +416,6 @@ def _fetch_youtube_channel_stats() -> list:
             })
 
     return results
-
-
-@app.get("/api/debug-yt")
-def debug_yt():
-    """Temporary debug endpoint to check YouTube config on Railway."""
-    result = {
-        "youtube_api_key_set": bool(YOUTUBE_API_KEY),
-        "youtube_api_key_length": len(YOUTUBE_API_KEY),
-        "youtube_channels_raw": os.getenv("YOUTUBE_CHANNELS", ""),
-        "youtube_channels_parsed": YOUTUBE_CHANNELS,
-        "youtube_channels_count": len(YOUTUBE_CHANNELS),
-    }
-    # Try actual API call
-    if YOUTUBE_API_KEY and YOUTUBE_CHANNELS:
-        try:
-            parts = YOUTUBE_CHANNELS[0].split(":", 1)
-            channel_id = parts[0]
-            resp = httpx.get(
-                "https://www.googleapis.com/youtube/v3/channels",
-                params={"part": "snippet,statistics", "id": channel_id, "key": YOUTUBE_API_KEY},
-                timeout=10,
-            )
-            result["api_status"] = resp.status_code
-            result["api_response"] = resp.json()
-        except Exception as e:
-            result["api_error"] = str(e)
-    return result
 
 
 @app.get("/api/leaderboard")
