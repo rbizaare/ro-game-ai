@@ -371,8 +371,20 @@ def _fetch_twitch_vod_stats(started_after: str) -> list:
     return results
 
 
-def _fetch_youtube_channel_stats() -> list:
-    """Fetch channel-level statistics for all YOUTUBE_CHANNELS."""
+def _parse_yt_duration(duration: str) -> float:
+    """Convert ISO 8601 duration 'PT2H12M4S' to decimal hours."""
+    h = int(m.group(1)) if (m := re.search(r'(\d+)H', duration)) else 0
+    mi = int(m.group(1)) if (m := re.search(r'(\d+)M', duration)) else 0
+    s = int(m.group(1)) if (m := re.search(r'(\d+)S', duration)) else 0
+    return h + mi / 60 + s / 3600
+
+
+def _fetch_youtube_channel_stats(started_after: str) -> list:
+    """Fetch monthly VOD stats for YouTube channels via RSS + Videos API.
+
+    Uses RSS (free) to get recent video IDs, then Videos API (1 unit per batch)
+    to get durations, view counts, and publish dates. Filters to current month.
+    """
     if not YOUTUBE_API_KEY or not YOUTUBE_CHANNELS:
         return []
 
@@ -383,7 +395,8 @@ def _fetch_youtube_channel_stats() -> list:
             channel_id = parts[0]
             handle = parts[1] if len(parts) > 1 else channel_id
 
-            resp = client.get(
+            # Step 1: Channel info (snippet + statistics) — 1 unit
+            ch_resp = client.get(
                 "https://www.googleapis.com/youtube/v3/channels",
                 params={
                     "part": "snippet,statistics",
@@ -391,16 +404,61 @@ def _fetch_youtube_channel_stats() -> list:
                     "key": YOUTUBE_API_KEY,
                 },
             )
-            data = resp.json()
-            if resp.status_code != 200:
-                print(f"[leaderboard] YouTube API error {resp.status_code}: {data}")
-            items = data.get("items", [])
-            if not items:
+            ch_data = ch_resp.json()
+            if ch_resp.status_code != 200:
+                print(f"[leaderboard] YouTube channels API error {ch_resp.status_code}: {ch_data}")
+                continue
+            ch_items = ch_data.get("items", [])
+            if not ch_items:
                 continue
 
-            item = items[0]
-            snippet = item.get("snippet", {})
-            stats = item.get("statistics", {})
+            ch_item = ch_items[0]
+            snippet = ch_item.get("snippet", {})
+            ch_stats = ch_item.get("statistics", {})
+
+            # Step 2: RSS feed for recent video IDs (free)
+            video_ids = []
+            try:
+                rss_resp = client.get(
+                    f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+                )
+                if rss_resp.status_code == 200:
+                    root = ET.fromstring(rss_resp.text)
+                    ns = {"yt": "http://www.youtube.com/xml/schemas/2015",
+                          "atom": "http://www.w3.org/2005/Atom"}
+                    for vid_entry in root.findall("atom:entry", ns)[:15]:
+                        vid_id_el = vid_entry.find("yt:videoId", ns)
+                        if vid_id_el is not None and vid_id_el.text:
+                            video_ids.append(vid_id_el.text)
+            except Exception as e:
+                print(f"[leaderboard] YouTube RSS error for {handle}: {e}")
+
+            # Step 3: Videos API for durations + views (1 unit per batch of 50)
+            streams = 0
+            total_hours = 0.0
+            total_views = 0
+            if video_ids:
+                vid_resp = client.get(
+                    "https://www.googleapis.com/youtube/v3/videos",
+                    params={
+                        "part": "contentDetails,statistics,snippet",
+                        "id": ",".join(video_ids),
+                        "key": YOUTUBE_API_KEY,
+                    },
+                )
+                vid_data = vid_resp.json()
+                if vid_resp.status_code == 200:
+                    for vid in vid_data.get("items", []):
+                        published = vid.get("snippet", {}).get("publishedAt", "")
+                        if published < started_after:
+                            continue
+                        duration = vid.get("contentDetails", {}).get("duration", "PT0S")
+                        views = int(vid.get("statistics", {}).get("viewCount", 0))
+                        streams += 1
+                        total_hours += _parse_yt_duration(duration)
+                        total_views += views
+                else:
+                    print(f"[leaderboard] YouTube videos API error {vid_resp.status_code}: {vid_data}")
 
             results.append({
                 "login": handle,
@@ -408,11 +466,11 @@ def _fetch_youtube_channel_stats() -> list:
                 "avatar_url": snippet.get("thumbnails", {}).get("medium", {}).get("url", ""),
                 "channel_url": f"https://www.youtube.com/channel/{channel_id}",
                 "platform": "youtube",
-                "streams": None,
-                "total_hours": None,
-                "total_views": int(stats.get("viewCount", 0)),
-                "subscriber_count": int(stats.get("subscriberCount", 0)),
-                "data_source": "youtube_channel_stats",
+                "streams": streams if streams > 0 else None,
+                "total_hours": round(total_hours, 1) if total_hours > 0 else None,
+                "total_views": total_views,
+                "subscriber_count": int(ch_stats.get("subscriberCount", 0)),
+                "data_source": "youtube_vods" if streams > 0 else "youtube_channel_stats",
             })
 
     return results
@@ -454,7 +512,7 @@ def api_leaderboard(month: str = ""):
         print(f"[leaderboard] Twitch VOD fetch error: {e}")
 
     try:
-        entries.extend(_fetch_youtube_channel_stats())
+        entries.extend(_fetch_youtube_channel_stats(started_after))
     except Exception as e:
         print(f"[leaderboard] YouTube channel stats error: {e}")
 
