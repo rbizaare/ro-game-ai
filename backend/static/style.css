@@ -273,9 +273,8 @@ body {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(139, 105, 20, 0.15);
     transition: transform 0.2s, box-shadow 0.2s;
-    min-width: 320px;
-    max-width: 360px;
-    flex-shrink: 0;
+    flex: 0 0 calc((100% - 2.5rem) / 3);
+    min-width: 260px;
     scroll-snap-align: start;
 }
 
@@ -976,7 +975,8 @@ body {
     }
 
     .stream-card {
-        min-width: 280px;
+        flex: 0 0 calc((100% - 1.25rem) / 2);
+        min-width: 240px;
     }
 
     .carousel-prev { left: 4px; }
