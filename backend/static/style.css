@@ -206,6 +206,8 @@ body {
 /* ===== STREAM CAROUSEL ===== */
 .streams-carousel {
     position: relative;
+    overflow: hidden;
+    padding: 0 2.5rem;
 }
 
 .streams-track {
@@ -257,11 +259,11 @@ body {
 }
 
 .carousel-prev {
-    left: -16px;
+    left: 0;
 }
 
 .carousel-next {
-    right: -16px;
+    right: 0;
 }
 
 /* ===== STREAM CARDS ===== */
@@ -979,8 +981,8 @@ body {
         min-width: 240px;
     }
 
-    .carousel-prev { left: 4px; }
-    .carousel-next { right: 4px; }
+    .carousel-prev { left: 0; }
+    .carousel-next { right: 0; }
 
     .server-banner-img {
         height: 160px;
