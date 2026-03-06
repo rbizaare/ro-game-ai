@@ -99,6 +99,69 @@ const STREAMERS = [
         platform: "youtube",
         bio: "I don't play games casually. It's either I'm not interested or play for 16 hours and forget to eat.",
         socials: { youtube: "https://www.youtube.com/@BossHooHoo" }
+    },
+    {
+        name: "benjopop",
+        displayName: "Benjopop",
+        avatar: "B",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/4a3a2882-8a16-411c-9f4f-5d5297c74d62-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Hi I'm Benjo, a Filipino gamer, and musician! I like gaming especially FPS games and MMORPGs!",
+        socials: { twitch: "https://www.twitch.tv/benjopop" }
+    },
+    {
+        name: "kakakompyutermoyan",
+        displayName: "PapaM",
+        avatar: "P",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/fbc9f910-17e8-446a-bb68-613144cbec8f-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Streaming retro games that will make you go back to your childhood!",
+        socials: { twitch: "https://www.twitch.tv/kakakompyutermoyan" }
+    },
+    {
+        name: "raketopanchi",
+        displayName: "Raketo Panchi",
+        avatar: "R",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/2fee5167-2d28-4785-b962-7a603a7034d2-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "A Ragnarok Streamer, Vlogger, Retro Gamer, Aspiring Pastor.",
+        socials: { twitch: "https://www.twitch.tv/raketopanchi" }
+    },
+    {
+        name: "titobhok",
+        displayName: "TitoBhok",
+        avatar: "T",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/6d578fbb-ed76-4380-961c-efde2d9f54c5-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Filipino Ragnarok Online streamer on Twitch.",
+        socials: { twitch: "https://www.twitch.tv/titobhok" }
+    },
+    {
+        name: "bishopmykel7038",
+        displayName: "bishopmykel7038",
+        avatar: "B",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/0d998dd4-afd1-49fe-a329-2b04a04410b1-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Relive Ragnarok Online Revo-Classic! Explore 2-1 & 2-2 jobs with unique builds.",
+        socials: { twitch: "https://www.twitch.tv/bishopmykel7038" }
+    },
+    {
+        name: "heymidnightsmile",
+        displayName: "heymidnightsmile",
+        avatar: "C",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/78a64203-3857-4290-9a52-c7ad8cf7bd84-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Gamer. Vibe curator. Memory maker. Stick around, chat a bit, and let's have some fun!",
+        socials: { twitch: "https://www.twitch.tv/heymidnightsmile" }
+    },
+    {
+        name: "mssnob",
+        displayName: "Isnaberang Demonyita",
+        avatar: "S",
+        avatarUrl: "https://static-cdn.jtvnw.net/jtv_user_pictures/f582b460-1c9a-47fc-86fc-77d91a0e6375-profile_image-300x300.png",
+        platform: "twitch",
+        bio: "Ms Snob. For Streaming Inquiries, Contact Me via Email: snobms@gmail.com",
+        socials: { twitch: "https://www.twitch.tv/mssnob" }
     }
 ];
 
