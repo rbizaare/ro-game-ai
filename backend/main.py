@@ -461,7 +461,7 @@ def _fetch_youtube_channel_stats(started_after: str) -> list:
                 vid_resp = client.get(
                     "https://www.googleapis.com/youtube/v3/videos",
                     params={
-                        "part": "contentDetails,statistics,snippet",
+                        "part": "contentDetails,statistics,snippet,liveStreamingDetails",
                         "id": ",".join(video_ids),
                         "key": YOUTUBE_API_KEY,
                     },
@@ -469,6 +469,9 @@ def _fetch_youtube_channel_stats(started_after: str) -> list:
                 vid_data = vid_resp.json()
                 if vid_resp.status_code == 200:
                     for vid in vid_data.get("items", []):
+                        # Only count actual live streams (not regular uploads/shorts)
+                        if not vid.get("liveStreamingDetails", {}).get("actualStartTime"):
+                            continue
                         published = vid.get("snippet", {}).get("publishedAt", "")
                         if published < started_after:
                             continue
