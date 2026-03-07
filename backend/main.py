@@ -103,6 +103,11 @@ def thread_page(thread_id: int):
     return FileResponse(os.path.join(BASE_DIR, "static", "thread.html"))
 
 
+@app.get("/forum/profile/{user_id}")
+def profile_page(user_id: int):
+    return FileResponse(os.path.join(BASE_DIR, "static", "profile.html"))
+
+
 @app.get("/monsters")
 def list_monsters(limit: int = 10):
     conn = get_db()

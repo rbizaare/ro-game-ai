@@ -38,15 +38,98 @@ function renderAuthBar() {
         bar.innerHTML = `
             <div class="forum-auth-user">
                 <img class="forum-auth-avatar" src="${escapeHtml(_currentUser.avatar_url)}" alt="">
-                <span>${escapeHtml(_currentUser.display_name)}</span>
+                <a href="/forum/profile/${_currentUser.id}" style="color:inherit;text-decoration:none;">${escapeHtml(_currentUser.display_name)}</a>
                 ${_currentUser.is_admin ? '<span style="font-size:0.7rem;color:var(--ro-gold);font-weight:600;">ADMIN</span>' : ''}
+            </div>
+            <div class="notif-wrapper" id="notifWrapper">
+                <button class="notif-bell" onclick="toggleNotifications()" title="Notifications">
+                    &#128276;<span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <div class="notif-dropdown" id="notifDropdown"></div>
             </div>
             <a href="/auth/logout" class="btn-logout">Sign Out</a>
         `;
+        pollNotifications();
     } else {
-        bar.innerHTML = `<a href="/auth/login" class="btn-google">Sign in with Google</a>`;
+        bar.innerHTML = '<a href="/auth/login" class="btn-google">Sign in with Google</a>';
     }
 }
+
+// ── Notifications ──
+
+async function pollNotifications() {
+    if (!_currentUser) return;
+    try {
+        const res = await fetch('/api/forum/notifications/count');
+        const data = await res.json();
+        const badge = document.getElementById('notifBadge');
+        if (badge) {
+            if (data.count > 0) {
+                badge.textContent = data.count > 99 ? '99+' : data.count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    } catch {}
+    // Poll every 60 seconds
+    setTimeout(pollNotifications, 60000);
+}
+
+async function toggleNotifications() {
+    const dropdown = document.getElementById('notifDropdown');
+    if (!dropdown) return;
+
+    if (dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        return;
+    }
+
+    // Load notifications
+    try {
+        const res = await fetch('/api/forum/notifications');
+        const data = await res.json();
+
+        if (!data.items.length) {
+            dropdown.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
+        } else {
+            dropdown.innerHTML = `
+                <div class="notif-header">
+                    <span>Notifications</span>
+                    <button class="notif-mark-read" onclick="markAllRead()">Mark all read</button>
+                </div>
+                ${data.items.map(n => `
+                    <a class="notif-item ${n.is_read ? '' : 'unread'}" href="/forum/thread/${n.thread_id}">
+                        <img class="notif-avatar" src="${escapeHtml(n.actor_avatar)}" alt="" onerror="this.style.display='none'">
+                        <div>
+                            <div class="notif-text"><strong>${escapeHtml(n.actor_name)}</strong> replied to <strong>${escapeHtml(n.thread_title || 'a thread')}</strong></div>
+                            <div class="notif-time">${timeAgo(n.created_at)}</div>
+                        </div>
+                    </a>
+                `).join('')}
+            `;
+        }
+        dropdown.classList.add('open');
+    } catch {}
+}
+
+async function markAllRead() {
+    try {
+        await fetch('/api/forum/notifications/read', { method: 'POST' });
+        const badge = document.getElementById('notifBadge');
+        if (badge) badge.style.display = 'none';
+        document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+    } catch {}
+}
+
+// Close notifications when clicking outside
+document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('notifWrapper');
+    const dropdown = document.getElementById('notifDropdown');
+    if (wrapper && dropdown && !wrapper.contains(e.target)) {
+        dropdown.classList.remove('open');
+    }
+});
 
 // ── Routing ──
 
@@ -57,11 +140,87 @@ function getRoute() {
     if (parts[0] === 'category' && parts[1]) {
         return { view: 'threads', slug: parts[1], page: parseInt(parts[2]) || 1 };
     }
+    if (parts[0] === 'search' && parts[1]) {
+        return { view: 'search', query: decodeURIComponent(parts[1]), page: parseInt(parts[2]) || 1 };
+    }
     return { view: 'categories' };
 }
 
 function navigate(hash) {
     window.location.hash = hash;
+}
+
+// ── Search ──
+
+function renderSearchBar() {
+    return `
+        <div class="forum-search-bar">
+            <input class="forum-search-input" id="searchInput" type="text" placeholder="Search threads..."
+                   onkeydown="if(event.key==='Enter')doSearch()">
+            <button class="forum-search-btn" onclick="doSearch()">Search</button>
+        </div>
+    `;
+}
+
+function doSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (q.length < 2) return alert('Search query must be at least 2 characters.');
+    navigate('search/' + encodeURIComponent(q));
+}
+
+async function renderSearchResults(query, page) {
+    const content = document.getElementById('forumContent');
+    const breadcrumb = document.getElementById('breadcrumb');
+    breadcrumb.style.display = 'flex';
+    breadcrumb.innerHTML = `<a href="#">Forum</a> <span>/</span> <span>Search: "${escapeHtml(query)}"</span>`;
+
+    try {
+        const res = await fetch(`/api/forum/search?q=${encodeURIComponent(query)}&page=${page}`);
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+
+        let resultsHtml;
+        if (!data.items.length) {
+            resultsHtml = '<div class="forum-empty">No threads found matching your search.</div>';
+        } else {
+            resultsHtml = `
+                <div class="forum-threads-wrap">
+                    ${data.items.map(t => `
+                        <a class="forum-thread-row" href="/forum/thread/${t.id}">
+                            <img class="forum-thread-avatar" src="${escapeHtml(t.author_avatar)}" alt="" onerror="this.style.display='none'">
+                            <div class="forum-thread-info">
+                                <div class="forum-thread-title"><span>${escapeHtml(t.title)}</span></div>
+                                <div class="forum-thread-sub">by ${escapeHtml(t.author_name)} in ${escapeHtml(t.category_name)} &middot; ${timeAgo(t.created_at)}</div>
+                            </div>
+                            <div class="forum-thread-stats">
+                                <div class="forum-thread-replies">${t.reply_count}</div>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        const totalPages = Math.ceil(data.total / data.per_page);
+        let paginationHtml = '';
+        if (totalPages > 1) {
+            paginationHtml = '<div class="forum-pagination">';
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHtml += `<a class="forum-page-btn ${i === page ? 'active' : ''}" href="#search/${encodeURIComponent(query)}/${i}">${i}</a>`;
+            }
+            paginationHtml += '</div>';
+        }
+
+        content.innerHTML = `
+            ${renderSearchBar()}
+            <h2 style="font-family:'Cinzel',serif;font-size:1rem;margin-bottom:1rem;">${data.total} result${data.total !== 1 ? 's' : ''} for "${escapeHtml(query)}"</h2>
+            ${resultsHtml}
+            ${paginationHtml}
+        `;
+        document.getElementById('searchInput').value = query;
+    } catch {
+        content.innerHTML = renderSearchBar() + '<div class="forum-empty">Search failed.</div>';
+    }
 }
 
 // ── Categories View ──
@@ -76,11 +235,12 @@ async function renderCategories() {
         const categories = await res.json();
 
         if (!categories.length) {
-            content.innerHTML = '<div class="forum-empty">No categories found.</div>';
+            content.innerHTML = renderSearchBar() + '<div class="forum-empty">No categories found.</div>';
             return;
         }
 
         content.innerHTML = `
+            ${renderSearchBar()}
             <div class="forum-categories">
                 ${categories.map(cat => `
                     <a class="forum-category-card" href="#category/${escapeHtml(cat.slug)}">
@@ -232,6 +392,8 @@ async function handleRoute() {
     const route = getRoute();
     if (route.view === 'threads') {
         await renderThreads(route.slug, route.page);
+    } else if (route.view === 'search') {
+        await renderSearchResults(route.query, route.page);
     } else {
         await renderCategories();
     }

@@ -82,6 +82,18 @@ def init_forum_db():
             created_at TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_replies_thread ON replies(thread_id);
+
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            type TEXT NOT NULL DEFAULT 'reply',
+            thread_id INTEGER REFERENCES threads(id),
+            reply_id INTEGER REFERENCES replies(id),
+            actor_id INTEGER NOT NULL REFERENCES users(id),
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read);
     """)
 
     # Seed categories
@@ -267,13 +279,20 @@ def create_reply(thread_id: int, user_id: int, body: str) -> int:
         "INSERT INTO replies (thread_id, user_id, body, created_at) VALUES (?, ?, ?, ?)",
         (thread_id, user_id, body, now),
     )
+    reply_id = cur.lastrowid
     # Update denormalized fields on thread
     conn.execute(
         "UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ?, updated_at = ? WHERE id = ?",
         (now, now, thread_id),
     )
+    # Notify thread author
+    thread_owner = conn.execute("SELECT user_id FROM threads WHERE id = ?", (thread_id,)).fetchone()
+    if thread_owner and thread_owner[0] != user_id:
+        conn.execute(
+            "INSERT INTO notifications (user_id, type, thread_id, reply_id, actor_id, created_at) VALUES (?, 'reply', ?, ?, ?, ?)",
+            (thread_owner[0], thread_id, reply_id, user_id, now),
+        )
     conn.commit()
-    reply_id = cur.lastrowid
     conn.close()
     return reply_id
 
@@ -289,6 +308,56 @@ def delete_reply(reply_id: int):
         )
         conn.commit()
     conn.close()
+
+
+# ── User stats helpers ──
+
+def get_user_post_count(user_id: int) -> int:
+    """Get total posts (threads + replies) for a user."""
+    conn = get_forum_db()
+    threads = conn.execute("SELECT COUNT(*) FROM threads WHERE user_id = ?", (user_id,)).fetchone()[0]
+    replies = conn.execute("SELECT COUNT(*) FROM replies WHERE user_id = ?", (user_id,)).fetchone()[0]
+    conn.close()
+    return threads + replies
+
+
+def get_user_rank_title(post_count: int) -> str:
+    """Map post count to RO job class rank."""
+    if post_count >= 500:
+        return "Transcendent"
+    if post_count >= 200:
+        return "Lord Knight"
+    if post_count >= 100:
+        return "Knight"
+    if post_count >= 50:
+        return "Swordsman"
+    if post_count >= 20:
+        return "Super Novice"
+    if post_count >= 5:
+        return "Novice"
+    return "Poring"
+
+
+def get_user_profile(user_id: int) -> dict | None:
+    """Get user profile with post counts and rank."""
+    conn = get_forum_db()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not user:
+        conn.close()
+        return None
+
+    thread_count = conn.execute("SELECT COUNT(*) FROM threads WHERE user_id = ?", (user_id,)).fetchone()[0]
+    reply_count = conn.execute("SELECT COUNT(*) FROM replies WHERE user_id = ?", (user_id,)).fetchone()[0]
+    conn.close()
+
+    total = thread_count + reply_count
+    return {
+        **dict(user),
+        "thread_count": thread_count,
+        "reply_count": reply_count,
+        "total_posts": total,
+        "rank_title": get_user_rank_title(total),
+    }
 
 
 # ── Ban helpers ──
@@ -311,5 +380,89 @@ def ban_user(user_id: int, banned_by: int, reason: str = "", duration_days: int 
 def unban_user(user_id: int):
     conn = get_forum_db()
     conn.execute("DELETE FROM bans WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+# ── Search helpers ──
+
+def search_threads(query: str, page: int = 1, per_page: int = 20) -> dict:
+    """Search threads by title and body using LIKE (simple, no FTS setup needed)."""
+    conn = get_forum_db()
+    offset = (page - 1) * per_page
+    pattern = f"%{query}%"
+
+    total = conn.execute(
+        "SELECT COUNT(*) FROM threads WHERE title LIKE ? OR body LIKE ?",
+        (pattern, pattern),
+    ).fetchone()[0]
+
+    rows = conn.execute("""
+        SELECT t.*, u.display_name as author_name, u.avatar_url as author_avatar,
+               c.slug as category_slug, c.name as category_name
+        FROM threads t
+        JOIN users u ON u.id = t.user_id
+        JOIN categories c ON c.id = t.category_id
+        WHERE t.title LIKE ? OR t.body LIKE ?
+        ORDER BY t.created_at DESC
+        LIMIT ? OFFSET ?
+    """, (pattern, pattern, per_page, offset)).fetchall()
+    conn.close()
+
+    return {"items": [dict(r) for r in rows], "page": page, "per_page": per_page, "total": total}
+
+
+# ── Notification helpers ──
+
+def create_notification(user_id: int, actor_id: int, thread_id: int, reply_id: int):
+    """Create a notification for a user when someone replies to their thread."""
+    if user_id == actor_id:
+        return  # Don't notify yourself
+    conn = get_forum_db()
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO notifications (user_id, type, thread_id, reply_id, actor_id, created_at) VALUES (?, 'reply', ?, ?, ?, ?)",
+        (user_id, thread_id, reply_id, actor_id, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_unread_count(user_id: int) -> int:
+    conn = get_forum_db()
+    count = conn.execute(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0",
+        (user_id,),
+    ).fetchone()[0]
+    conn.close()
+    return count
+
+
+def get_notifications(user_id: int, page: int = 1, per_page: int = 20) -> dict:
+    conn = get_forum_db()
+    offset = (page - 1) * per_page
+
+    total = conn.execute(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ?", (user_id,)
+    ).fetchone()[0]
+
+    rows = conn.execute("""
+        SELECT n.*, u.display_name as actor_name, u.avatar_url as actor_avatar,
+               t.title as thread_title
+        FROM notifications n
+        JOIN users u ON u.id = n.actor_id
+        LEFT JOIN threads t ON t.id = n.thread_id
+        WHERE n.user_id = ?
+        ORDER BY n.created_at DESC
+        LIMIT ? OFFSET ?
+    """, (user_id, per_page, offset)).fetchall()
+    conn.close()
+
+    return {"items": [dict(r) for r in rows], "page": page, "per_page": per_page, "total": total}
+
+
+def mark_notifications_read(user_id: int):
+    conn = get_forum_db()
+    conn.execute("UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0", (user_id,))
     conn.commit()
     conn.close()

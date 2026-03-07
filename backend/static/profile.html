@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — RO PH Community Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/forum.css">
+    <script src="/static/darkmode.js"></script>
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">RO PH Hub</a>
+        <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+        <ul class="nav-links">
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/streamers">Streamers</a></li>
+            <li><a href="/servers">Servers</a></li>
+            <li><a href="/forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <!-- Profile Content -->
+    <section>
+        <div class="section">
+            <!-- Breadcrumb -->
+            <div class="forum-breadcrumb">
+                <a href="/forum">Forum</a> <span>/</span> <span>Profile</span>
+            </div>
+
+            <div id="profileContent">
+                <div class="forum-empty">Loading profile...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
+        <p>Ragnarok Online &copy; Gravity Co., Ltd. &amp; Lee Myoungjin.</p>
+    </footer>
+
+    <script>
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+    }
+
+    function timeAgo(iso) {
+        if (!iso) return '';
+        const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+        return new Date(iso).toLocaleDateString();
+    }
+
+    function getUserId() {
+        const parts = window.location.pathname.split('/');
+        return parseInt(parts[parts.length - 1]) || 0;
+    }
+
+    let _activeTab = 'threads';
+
+    async function loadProfile() {
+        const userId = getUserId();
+        if (!userId) {
+            document.getElementById('profileContent').innerHTML = '<div class="forum-empty">User not found.</div>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/forum/users/${userId}`);
+            if (!res.ok) throw new Error('Not found');
+            const user = await res.json();
+
+            document.title = `${user.display_name} — RO PH Community Hub`;
+
+            const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : '';
+
+            const headerHtml = `
+                <div class="profile-header">
+                    <img class="profile-avatar" src="${escapeHtml(user.avatar_url)}" alt="" onerror="this.style.display='none'">
+                    <div class="profile-info">
+                        <h2>${escapeHtml(user.display_name)}
+                            ${user.is_admin ? '<span style="font-size:0.7rem;color:var(--ro-gold);font-weight:600;margin-left:0.5rem;">ADMIN</span>' : ''}
+                        </h2>
+                        <span class="profile-rank">${escapeHtml(user.rank_title)}</span>
+                        <div class="profile-stats">
+                            <span><strong>${user.thread_count}</strong> threads</span>
+                            <span><strong>${user.reply_count}</strong> replies</span>
+                            <span><strong>${user.total_posts}</strong> total posts</span>
+                        </div>
+                        <div class="profile-joined">Joined ${joinDate}</div>
+                    </div>
+                </div>
+            `;
+
+            const tabsHtml = `
+                <div class="profile-tabs">
+                    <button class="profile-tab active" id="tabThreads" onclick="switchTab('threads', ${userId})">Threads</button>
+                    <button class="profile-tab" id="tabReplies" onclick="switchTab('replies', ${userId})">Replies</button>
+                </div>
+            `;
+
+            document.getElementById('profileContent').innerHTML = headerHtml + tabsHtml + '<div id="profileTabContent"></div>';
+            await loadTabContent('threads', userId);
+        } catch {
+            document.getElementById('profileContent').innerHTML = '<div class="forum-empty">User not found.</div>';
+        }
+    }
+
+    async function switchTab(tab, userId) {
+        _activeTab = tab;
+        document.querySelectorAll('.profile-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById(tab === 'threads' ? 'tabThreads' : 'tabReplies').classList.add('active');
+        await loadTabContent(tab, userId);
+    }
+
+    async function loadTabContent(tab, userId) {
+        const container = document.getElementById('profileTabContent');
+        if (!container) return;
+
+        try {
+            const res = await fetch(`/api/forum/users/${userId}/${tab}`);
+            const data = await res.json();
+
+            if (!data.items.length) {
+                container.innerHTML = `<div class="forum-empty">No ${tab} yet.</div>`;
+                return;
+            }
+
+            if (tab === 'threads') {
+                container.innerHTML = `
+                    <div class="forum-threads-wrap">
+                        ${data.items.map(t => `
+                            <a class="forum-thread-row" href="/forum/thread/${t.id}">
+                                <div class="forum-thread-info">
+                                    <div class="forum-thread-title"><span>${escapeHtml(t.title)}</span></div>
+                                    <div class="forum-thread-sub">in ${escapeHtml(t.category_name)} &middot; ${timeAgo(t.created_at)}</div>
+                                </div>
+                                <div class="forum-thread-stats">
+                                    <div class="forum-thread-replies">${t.reply_count}</div>
+                                </div>
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="forum-threads-wrap">
+                        ${data.items.map(r => `
+                            <a class="forum-thread-row" href="/forum/thread/${r.thread_id}">
+                                <div class="forum-thread-info">
+                                    <div class="forum-thread-title"><span>Re: ${escapeHtml(r.thread_title)}</span></div>
+                                    <div class="forum-thread-sub">${timeAgo(r.created_at)}</div>
+                                </div>
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        } catch {
+            container.innerHTML = `<div class="forum-empty">Failed to load ${tab}.</div>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>

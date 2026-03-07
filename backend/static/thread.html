@@ -6,6 +6,7 @@
     <title>Thread — RO PH Community Hub</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/forum.css">
+    <script src="/static/darkmode.js"></script>
 </head>
 <body>
 
@@ -142,7 +143,10 @@
                     <div class="thread-op-header">
                         <img class="thread-op-avatar" src="${escapeHtml(t.author_avatar)}" alt="" onerror="this.style.display='none'">
                         <div class="thread-op-meta">
-                            <div class="thread-op-author">${escapeHtml(t.author_name)}</div>
+                            <div class="thread-op-author">
+                                <a href="/forum/profile/${t.user_id}" class="author-link">${escapeHtml(t.author_name)}</a>
+                                ${t.author_rank ? `<span class="rank-badge">${escapeHtml(t.author_rank)}</span>` : ''}
+                            </div>
                             <div class="thread-op-time">${timeAgo(t.created_at)}</div>
                         </div>
                     </div>
@@ -158,7 +162,10 @@
                     <div class="thread-reply">
                         <div class="thread-reply-header">
                             <img class="thread-reply-avatar" src="${escapeHtml(r.author_avatar)}" alt="" onerror="this.style.display='none'">
-                            <span class="thread-reply-author">${escapeHtml(r.author_name)}</span>
+                            <span class="thread-reply-author">
+                                <a href="/forum/profile/${r.user_id}" class="author-link">${escapeHtml(r.author_name)}</a>
+                                ${r.author_rank ? `<span class="rank-badge">${escapeHtml(r.author_rank)}</span>` : ''}
+                            </span>
                             <span class="thread-reply-time">${timeAgo(r.created_at)}</span>
                             ${_currentUser && _currentUser.is_admin ? `<button class="btn-admin btn-admin-danger thread-reply-delete" onclick="deleteReply(${r.id})">Delete</button>` : ''}
                         </div>

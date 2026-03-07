@@ -10,9 +10,39 @@ from forum_db import (
     list_threads, get_thread, create_thread, delete_thread, toggle_pin, toggle_lock,
     list_replies, create_reply, delete_reply,
     ban_user, unban_user, get_user_by_id,
+    get_user_post_count, get_user_rank_title, get_user_profile,
+    get_forum_db, search_threads,
+    get_unread_count, get_notifications, mark_notifications_read,
 )
 
 forum_router = APIRouter(prefix="/api/forum", tags=["forum"])
+
+# ── User rank cache (in-memory, refreshed per request batch) ──
+_rank_cache: dict = {}  # user_id -> {"post_count": int, "rank_title": str}
+_rank_cache_expires: float = 0
+
+
+def _get_rank_info(user_id: int) -> dict:
+    """Get cached rank info for a user."""
+    global _rank_cache, _rank_cache_expires
+    now = time.time()
+    if now > _rank_cache_expires:
+        _rank_cache = {}
+        _rank_cache_expires = now + 300  # 5 min cache
+
+    if user_id not in _rank_cache:
+        count = get_user_post_count(user_id)
+        _rank_cache[user_id] = {"post_count": count, "rank_title": get_user_rank_title(count)}
+    return _rank_cache[user_id]
+
+
+def _enrich_with_rank(items: list[dict], user_id_key: str = "user_id") -> list[dict]:
+    """Add rank_title and post_count to a list of thread/reply dicts."""
+    for item in items:
+        info = _get_rank_info(item[user_id_key])
+        item["author_rank"] = info["rank_title"]
+        item["author_post_count"] = info["post_count"]
+    return items
 
 # ── Rate limiting ──
 
@@ -72,7 +102,13 @@ def api_get_thread(thread_id: int, page: int = 1):
     thread = get_thread(thread_id)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
+    # Add rank info to OP
+    info = _get_rank_info(thread["user_id"])
+    thread["author_rank"] = info["rank_title"]
+    thread["author_post_count"] = info["post_count"]
+    # Add rank info to replies
     replies = list_replies(thread_id, page=max(1, page))
+    _enrich_with_rank(replies["items"])
     return {"thread": thread, "replies": replies}
 
 
@@ -161,4 +197,91 @@ def api_ban_user(req: BanRequest, request: Request):
 def api_unban_user(user_id: int, request: Request):
     require_admin(request)
     unban_user(user_id)
+    return {"ok": True}
+
+
+# ── Search endpoint ──
+
+@forum_router.get("/search")
+def api_search(q: str = "", page: int = 1):
+    if not q or len(q.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Query must be at least 2 characters")
+    return search_threads(q.strip(), page=max(1, page))
+
+
+# ── Profile endpoint ──
+
+@forum_router.get("/users/{user_id}")
+def api_user_profile(user_id: int):
+    profile = get_user_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Remove sensitive fields
+    profile.pop("google_id", None)
+    profile.pop("email", None)
+    return profile
+
+
+@forum_router.get("/users/{user_id}/threads")
+def api_user_threads(user_id: int, page: int = 1):
+    """Get threads created by a user."""
+    per_page = 20
+    offset = (max(1, page) - 1) * per_page
+    conn = get_forum_db()
+    total = conn.execute("SELECT COUNT(*) FROM threads WHERE user_id = ?", (user_id,)).fetchone()[0]
+    rows = conn.execute("""
+        SELECT t.*, u.display_name as author_name, u.avatar_url as author_avatar,
+               c.slug as category_slug, c.name as category_name
+        FROM threads t
+        JOIN users u ON u.id = t.user_id
+        JOIN categories c ON c.id = t.category_id
+        WHERE t.user_id = ?
+        ORDER BY t.created_at DESC
+        LIMIT ? OFFSET ?
+    """, (user_id, per_page, offset)).fetchall()
+    conn.close()
+    return {"items": [dict(r) for r in rows], "page": page, "per_page": per_page, "total": total}
+
+
+@forum_router.get("/users/{user_id}/replies")
+def api_user_replies(user_id: int, page: int = 1):
+    """Get replies by a user."""
+    per_page = 20
+    offset = (max(1, page) - 1) * per_page
+    conn = get_forum_db()
+    total = conn.execute("SELECT COUNT(*) FROM replies WHERE user_id = ?", (user_id,)).fetchone()[0]
+    rows = conn.execute("""
+        SELECT r.*, u.display_name as author_name, u.avatar_url as author_avatar,
+               t.title as thread_title, t.id as thread_id
+        FROM replies r
+        JOIN users u ON u.id = r.user_id
+        JOIN threads t ON t.id = r.thread_id
+        WHERE r.user_id = ?
+        ORDER BY r.created_at DESC
+        LIMIT ? OFFSET ?
+    """, (user_id, per_page, offset)).fetchall()
+    conn.close()
+    return {"items": [dict(r) for r in rows], "page": page, "per_page": per_page, "total": total}
+
+
+# ── Notification endpoints ──
+
+@forum_router.get("/notifications/count")
+def api_notification_count(request: Request):
+    user = get_current_user(request)
+    if not user:
+        return {"count": 0}
+    return {"count": get_unread_count(user["id"])}
+
+
+@forum_router.get("/notifications")
+def api_notifications(request: Request, page: int = 1):
+    user = require_auth(request)
+    return get_notifications(user["id"], page=max(1, page))
+
+
+@forum_router.post("/notifications/read")
+def api_mark_read(request: Request):
+    user = require_auth(request)
+    mark_notifications_read(user["id"])
     return {"ok": True}
