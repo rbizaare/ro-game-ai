@@ -162,6 +162,60 @@ const STREAMERS = [
         platform: "twitch",
         bio: "Ms Snob. For Streaming Inquiries, Contact Me via Email: snobms@gmail.com",
         socials: { twitch: "https://www.twitch.tv/mssnob" }
+    },
+    {
+        name: "imdracarys",
+        displayName: "I'm DracaryS",
+        avatar: "D",
+        avatarUrl: "https://yt3.ggpht.com/XHji-sPjiAUVYGw7BCNVMvM9K1trenZgy31yWP8Uddd8Yc5oOvQbZ9wFVxF5vaO01i-b2QLm=s240-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "Your ultimate destination for everything Ragnarok Online!",
+        socials: { youtube: "https://www.youtube.com/@imdracarys" }
+    },
+    {
+        name: "Pentel.pen43",
+        displayName: "Pen",
+        avatar: "P",
+        avatarUrl: "https://yt3.ggpht.com/l25sQL7tb-MXW9CXCy1R0V82qJzlFUTpiqQirTemQtIXM_yIrdxDqdKRjII62BzAegKYbKeusA=s240-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "Tocino lover. Self proclaimed genius ng southgate.",
+        socials: { youtube: "https://www.youtube.com/@Pentel.pen43" }
+    },
+    {
+        name: "MousuMMO",
+        displayName: "Mousu MMO",
+        avatar: "M",
+        avatarUrl: "https://yt3.ggpht.com/J7SMdOmdLziLlOlTUI2xlXVXT07hp01ywy2rvjZF27C9Wh2jUjcv0Ji0RdbyGH8EBucQVXJ0=s240-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "In-depth guides, strategy videos and more for Ragnarok games & other MMORPGs.",
+        socials: { youtube: "https://www.youtube.com/@MousuMMO" }
+    },
+    {
+        name: "kirovplaying",
+        displayName: "Kirov Playing",
+        avatar: "K",
+        avatarUrl: "https://yt3.ggpht.com/uEhnXgezJJYmpfCYtC2pee0s-0NShiPOmsHS6Q-Zw0DSXfXF3j_1paYVg9_hCW36b7nYZfmmP_U=s240-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "Gaming livestreams, gameplay tips, and learning through watching.",
+        socials: { youtube: "https://www.youtube.com/@kirovplaying" }
+    },
+    {
+        name: "bossjigss",
+        displayName: "Boss Jigs",
+        avatar: "J",
+        avatarUrl: "https://yt3.ggpht.com/VMkRB2leR8motrnmYbeizhzDNZ8fzkYt1wHn8cH_t0Cq2yZEYpKstOYaHEss6lFXEZ9If8EBKg=s240-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "Filipino Ragnarok Online content creator on YouTube.",
+        socials: { youtube: "https://www.youtube.com/@bossjigss" }
+    },
+    {
+        name: "owiishii",
+        displayName: "OWIISHII",
+        avatar: "O",
+        avatarUrl: "https://yt3.ggpht.com/aD0uGV7E8cfwIQ18k0H51X66sbp_HQXwXxdQi_RVP8uzxn0vYefXsq-_vDbV-XQAHCIufCv29Q=s240-c-k-c0x00ffffff-no-rj",
+        platform: "youtube",
+        bio: "Gaming Tips & Tutorials Hub.",
+        socials: { youtube: "https://www.youtube.com/@owiishii" }
     }
 ];
 
@@ -301,7 +355,7 @@ function renderLeaderboardTable(entries, sortMetric) {
         const av = a[key] !== null && a[key] !== undefined ? a[key] : -1;
         const bv = b[key] !== null && b[key] !== undefined ? b[key] : -1;
         return bv - av;
-    });
+    }).slice(0, 10);
 
     const rowsHtml = sorted.map((entry, i) => {
         const rank = i + 1;
