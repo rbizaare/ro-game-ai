@@ -117,12 +117,20 @@ def auth_callback(request: Request, code: str = "", state: str = "", error: str 
             raise HTTPException(status_code=400, detail="Failed to fetch user info")
         userinfo = userinfo_resp.json()
 
+    # Override identity for admin accounts
+    email = userinfo.get("email", "")
+    display_name = userinfo.get("name", "Anonymous")
+    avatar_url = userinfo.get("picture", "")
+    if email.lower() in [e.lower() for e in FORUM_ADMIN_EMAILS]:
+        display_name = "Lunatic"
+        avatar_url = "/static/lunatic-avatar.png"
+
     # Upsert user in DB
     user = upsert_user(
         google_id=userinfo["sub"],
-        email=userinfo.get("email", ""),
-        display_name=userinfo.get("name", "Anonymous"),
-        avatar_url=userinfo.get("picture", ""),
+        email=email,
+        display_name=display_name,
+        avatar_url=avatar_url,
         admin_emails=FORUM_ADMIN_EMAILS,
     )
 
