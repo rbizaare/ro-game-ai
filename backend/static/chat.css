@@ -344,3 +344,59 @@
         text-align: left;
     }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .chat-container {
+    background: var(--ro-parchment);
+}
+
+[data-theme="dark"] .bot-message .message-content {
+    background: var(--ro-card-bg);
+    border-color: var(--ro-card-border);
+    color: var(--ro-text);
+}
+
+[data-theme="dark"] .chat-input-area {
+    background: var(--ro-parchment);
+    border-top-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .chat-input-area input {
+    background: var(--ro-input-bg);
+    border-color: var(--ro-card-border);
+    color: var(--ro-text);
+}
+
+[data-theme="dark"] .chat-input-area input:disabled {
+    background: var(--ro-card-bg);
+}
+
+[data-theme="dark"] .btn-commands {
+    background: var(--ro-input-bg);
+    border-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .modal {
+    background: var(--ro-parchment);
+    border-color: var(--ro-gold);
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .modal-header h2 {
+    color: var(--ro-gold-bright);
+}
+
+[data-theme="dark"] .modal-close:hover {
+    color: var(--ro-gold-bright);
+}
+
+[data-theme="dark"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .cmd-group h3 {
+    border-bottom-color: var(--ro-card-border);
+}

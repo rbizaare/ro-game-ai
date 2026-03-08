@@ -1263,6 +1263,18 @@ body {
     color: var(--ro-text-light);
 }
 
+[data-theme="dark"] .section-title {
+    color: var(--ro-gold-bright);
+}
+
+[data-theme="dark"] .server-name {
+    color: var(--ro-gold-bright);
+}
+
+[data-theme="dark"] .server-group-label {
+    color: var(--ro-gold);
+}
+
 /* ===== EMPTY STATES ===== */
 .empty-streams {
     text-align: center;
