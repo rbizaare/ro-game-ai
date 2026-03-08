@@ -172,17 +172,6 @@
         </div>
     </section>
 
-    <!-- Weekly MVP Board -->
-    <section id="mvp-board">
-        <div class="section">
-            <h2 class="section-title">Weekly MVPs</h2>
-            <p class="section-subtitle">Top contributors and streamer of the week</p>
-            <div class="mvp-grid" id="mvpBoard">
-                <p class="mvp-empty">Loading...</p>
-            </div>
-        </div>
-    </section>
-
     <!-- Shoutbox -->
     <section class="section-alt" id="shoutbox">
         <div class="section">
@@ -197,7 +186,7 @@
                 <button type="submit" class="shoutbox-send-btn">Send</button>
             </form>
             <p class="shoutbox-login-prompt" id="shoutboxLoginPrompt">
-                <a href="/auth/login">Sign in with Google</a> to join the conversation.
+                <a href="/auth/login?redirect_to=/">Sign in with Google</a> to join the conversation.
             </p>
         </div>
     </section>
@@ -209,7 +198,6 @@
     </footer>
 
     <script src="/static/streamers.js"></script>
-    <script src="/static/mvp-board.js"></script>
     <script src="/static/shoutbox.js"></script>
 </body>
 </html>

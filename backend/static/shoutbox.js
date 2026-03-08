@@ -75,11 +75,11 @@
             scrollToBottom();
         });
 
-    // Check auth
+    // Check auth — /api/auth/me returns user object directly (or null)
     fetch('/api/auth/me')
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            currentUser = data.user || null;
+            currentUser = data && data.id ? data : null;
             if (currentUser && form) {
                 form.style.display = 'flex';
                 if (loginPrompt) loginPrompt.style.display = 'none';
@@ -131,7 +131,7 @@
                         return;
                     }
                     if (r.status === 401) {
-                        window.location.href = '/auth/login';
+                        window.location.href = '/auth/login?redirect_to=/';
                         return;
                     }
                     if (r.ok) {

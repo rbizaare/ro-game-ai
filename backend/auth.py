@@ -60,12 +60,16 @@ def require_admin(request: Request) -> dict:
 
 
 @auth_router.get("/auth/login")
-def auth_login(request: Request):
+def auth_login(request: Request, redirect_to: str = "/forum"):
     """Redirect to Google OAuth consent screen."""
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google OAuth not configured")
 
-    state = serializer.dumps({"nonce": secrets.token_hex(16)})
+    # Only allow relative redirects to prevent open redirect attacks
+    if not redirect_to.startswith("/"):
+        redirect_to = "/forum"
+
+    state = serializer.dumps({"nonce": secrets.token_hex(16), "redirect_to": redirect_to})
     redirect_uri = f"{FORUM_BASE_URL}/auth/callback"
 
     params = {
@@ -93,6 +97,15 @@ def auth_callback(request: Request, code: str = "", state: str = "", error: str 
     saved_state = request.cookies.get("oauth_state", "")
     if not state or state != saved_state:
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
+
+    # Extract redirect_to from state
+    try:
+        state_data = serializer.loads(state, max_age=600)
+        redirect_after = state_data.get("redirect_to", "/forum")
+    except Exception:
+        redirect_after = "/forum"
+    if not redirect_after.startswith("/"):
+        redirect_after = "/forum"
 
     redirect_uri = f"{FORUM_BASE_URL}/auth/callback"
 
@@ -136,7 +149,7 @@ def auth_callback(request: Request, code: str = "", state: str = "", error: str 
 
     # Set session cookie
     session_token = serializer.dumps({"user_id": user["id"]})
-    response = RedirectResponse(url="/forum")
+    response = RedirectResponse(url=redirect_after)
     response.set_cookie(
         "forum_session", session_token,
         max_age=SESSION_MAX_AGE, httponly=True, samesite="lax", path="/",
