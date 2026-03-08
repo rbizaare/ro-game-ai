@@ -46,8 +46,9 @@
 
             <!-- Main Content Area -->
             <div id="forumContent">
-                <div class="forum-empty">Loading forum...</div>
+                <div id="forumSkeleton"></div>
             </div>
+            <script>document.getElementById('forumSkeleton').innerHTML = skeletonCards(4);</script>
         </div>
     </section>
 

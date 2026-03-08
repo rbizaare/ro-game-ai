@@ -16,6 +16,30 @@ function timeAgo(iso) {
     return new Date(iso).toLocaleDateString();
 }
 
+/* ── Skeleton loaders ── */
+function skeletonCards(count) {
+    var html = '';
+    for (var i = 0; i < count; i++) {
+        html += '<div class="skeleton-card"><div class="skeleton-row">' +
+            '<div class="skeleton skeleton-avatar"></div>' +
+            '<div class="skeleton-text">' +
+                '<div class="skeleton skeleton-line medium"></div>' +
+                '<div class="skeleton skeleton-line short"></div>' +
+            '</div>' +
+        '</div></div>';
+    }
+    return html;
+}
+
+function skeletonLines(count) {
+    var html = '';
+    var widths = ['long', 'medium', 'short'];
+    for (var i = 0; i < count; i++) {
+        html += '<div class="skeleton skeleton-line ' + widths[i % 3] + '"></div>';
+    }
+    return html;
+}
+
 /* ── Toast notifications ── */
 (function () {
     var container = null;

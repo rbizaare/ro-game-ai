@@ -35,18 +35,16 @@
     <!-- Thread Content -->
     <section>
         <div class="section">
-            <!-- Auth Bar -->
-            <div class="forum-auth" id="authBar"></div>
-
             <!-- Breadcrumb -->
             <div class="forum-breadcrumb" id="breadcrumb">
-                <a href="/forum">Forum</a> <span>/</span> <span>Loading...</span>
+                <a href="/forum">Forum</a> <span>/</span> <span class="skeleton skeleton-line short" style="display:inline-block;width:80px;height:12px;vertical-align:middle;margin:0;"></span>
             </div>
 
             <!-- Thread Content -->
             <div id="threadContent">
-                <div class="forum-empty">Loading thread...</div>
+                <div id="threadSkeleton"></div>
             </div>
+            <script>document.getElementById('threadSkeleton').innerHTML = '<div class="skeleton-card"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line medium"></div><div style="height:8px;"></div>' + skeletonLines(4) + '</div>' + skeletonCards(3);</script>
         </div>
     </section>
 

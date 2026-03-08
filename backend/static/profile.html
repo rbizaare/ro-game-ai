@@ -41,8 +41,9 @@
             </div>
 
             <div id="profileContent">
-                <div class="forum-empty">Loading profile...</div>
+                <div id="profileSkeleton"></div>
             </div>
+            <script>document.getElementById('profileSkeleton').innerHTML = '<div class="skeleton-card"><div class="skeleton-row"><div class="skeleton skeleton-avatar" style="width:64px;height:64px;"></div><div class="skeleton-text">' + skeletonLines(3) + '</div></div></div>' + skeletonCards(3);</script>
         </div>
     </section>
 
