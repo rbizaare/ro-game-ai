@@ -41,95 +41,11 @@ function renderAuthBar() {
                 <a href="/forum/profile/${_currentUser.id}" style="color:inherit;text-decoration:none;">${escapeHtml(_currentUser.display_name)}</a>
                 ${_currentUser.is_admin ? '<span style="font-size:0.7rem;color:var(--ro-gold);font-weight:600;">ADMIN</span>' : ''}
             </div>
-            <div class="notif-wrapper" id="notifWrapper">
-                <button class="notif-bell" onclick="toggleNotifications()" title="Notifications">
-                    &#128276;<span class="notif-badge" id="notifBadge" style="display:none;">0</span>
-                </button>
-                <div class="notif-dropdown" id="notifDropdown"></div>
-            </div>
-            <a href="/auth/logout" class="btn-logout">Sign Out</a>
         `;
-        pollNotifications();
     } else {
         bar.innerHTML = '<a href="/auth/login" class="btn-google">Sign in with Google</a>';
     }
 }
-
-// ── Notifications ──
-
-async function pollNotifications() {
-    if (!_currentUser) return;
-    try {
-        const res = await fetch('/api/forum/notifications/count');
-        const data = await res.json();
-        const badge = document.getElementById('notifBadge');
-        if (badge) {
-            if (data.count > 0) {
-                badge.textContent = data.count > 99 ? '99+' : data.count;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-    } catch {}
-    // Poll every 60 seconds
-    setTimeout(pollNotifications, 60000);
-}
-
-async function toggleNotifications() {
-    const dropdown = document.getElementById('notifDropdown');
-    if (!dropdown) return;
-
-    if (dropdown.classList.contains('open')) {
-        dropdown.classList.remove('open');
-        return;
-    }
-
-    // Load notifications
-    try {
-        const res = await fetch('/api/forum/notifications');
-        const data = await res.json();
-
-        if (!data.items.length) {
-            dropdown.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
-        } else {
-            dropdown.innerHTML = `
-                <div class="notif-header">
-                    <span>Notifications</span>
-                    <button class="notif-mark-read" onclick="markAllRead()">Mark all read</button>
-                </div>
-                ${data.items.map(n => `
-                    <a class="notif-item ${n.is_read ? '' : 'unread'}" href="/forum/thread/${n.thread_id}">
-                        <img class="notif-avatar" src="${escapeHtml(n.actor_avatar)}" alt="" onerror="this.style.display='none'">
-                        <div>
-                            <div class="notif-text"><strong>${escapeHtml(n.actor_name)}</strong> replied to <strong>${escapeHtml(n.thread_title || 'a thread')}</strong></div>
-                            <div class="notif-time">${timeAgo(n.created_at)}</div>
-                        </div>
-                    </a>
-                `).join('')}
-            `;
-        }
-        dropdown.classList.add('open');
-    } catch {}
-}
-
-async function markAllRead() {
-    try {
-        await fetch('/api/forum/notifications/read', { method: 'POST' });
-        const badge = document.getElementById('notifBadge');
-        if (badge) badge.style.display = 'none';
-        document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
-    } catch {}
-}
-
-// Close notifications when clicking outside
-document.addEventListener('click', function(e) {
-    const wrapper = document.getElementById('notifWrapper');
-    const dropdown = document.getElementById('notifDropdown');
-    if (wrapper && dropdown && !wrapper.contains(e.target)) {
-        dropdown.classList.remove('open');
-    }
-});
 
 // ── Routing ──
 

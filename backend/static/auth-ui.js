@@ -71,6 +71,12 @@
                     avatarHtml +
                     '<span class="nav-auth-name">' + escapeHtml(currentUser.display_name) + '</span>' +
                 '</a>' +
+                '<div class="nav-notif-wrapper" id="navNotifWrapper">' +
+                    '<button class="nav-notif-bell" id="navNotifBell" title="Notifications">' +
+                        '&#128276;<span class="nav-notif-badge" id="navNotifBadge" style="display:none;">0</span>' +
+                    '</button>' +
+                    '<div class="nav-notif-dropdown" id="navNotifDropdown"></div>' +
+                '</div>' +
                 '<a href="/auth/logout?redirect_to=' + encodeURIComponent(location.pathname) + '" class="nav-auth-logout" title="Sign Out">Sign Out</a>';
         } else {
             el.innerHTML = '<button class="nav-auth-login" id="navLoginBtn">Sign In</button>';
@@ -93,6 +99,122 @@
                 });
             }
         }
+
+        // Bind notification bell
+        if (currentUser) {
+            initNotifications();
+        }
+    }
+
+    // ── Notifications ──
+    function timeAgo(iso) {
+        var diff = (Date.now() - new Date(iso).getTime()) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function initNotifications() {
+        var bell = document.getElementById('navNotifBell');
+        var dropdown = document.getElementById('navNotifDropdown');
+        var wrapper = document.getElementById('navNotifWrapper');
+        if (!bell || !dropdown) return;
+
+        // Fetch unread count
+        fetch('/api/forum/notifications/count')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var badge = document.getElementById('navNotifBadge');
+                if (badge && data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'flex';
+                }
+            })
+            .catch(function () {});
+
+        // Toggle dropdown
+        bell.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (dropdown.classList.contains('open')) {
+                dropdown.classList.remove('open');
+                return;
+            }
+            dropdown.innerHTML = '<div class="nav-notif-loading">Loading...</div>';
+            dropdown.classList.add('open');
+
+            fetch('/api/forum/notifications')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.items || !data.items.length) {
+                        dropdown.innerHTML = '<div class="nav-notif-empty">No notifications yet.</div>';
+                        return;
+                    }
+                    var html = '<div class="nav-notif-header">' +
+                        '<span>Notifications</span>' +
+                        '<button class="nav-notif-mark-read" id="navNotifMarkRead">Mark all read</button>' +
+                    '</div>';
+                    data.items.forEach(function (n) {
+                        var avatarImg = n.actor_avatar
+                            ? '<img class="nav-notif-avatar" src="' + escapeHtml(n.actor_avatar) + '" alt="">'
+                            : '<span class="nav-notif-avatar-ph">' + escapeHtml((n.actor_name || '?').charAt(0).toUpperCase()) + '</span>';
+                        html += '<a class="nav-notif-item' + (n.is_read ? '' : ' unread') + '" href="/forum/thread/' + n.thread_id + '">' +
+                            avatarImg +
+                            '<div>' +
+                                '<div class="nav-notif-text"><strong>' + escapeHtml(n.actor_name) + '</strong> replied to <strong>' + escapeHtml(n.thread_title || 'a thread') + '</strong></div>' +
+                                '<div class="nav-notif-time">' + timeAgo(n.created_at) + '</div>' +
+                            '</div>' +
+                        '</a>';
+                    });
+                    dropdown.innerHTML = html;
+
+                    var markBtn = document.getElementById('navNotifMarkRead');
+                    if (markBtn) {
+                        markBtn.addEventListener('click', function (ev) {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            fetch('/api/forum/notifications/read', { method: 'POST' })
+                                .then(function () {
+                                    var badge = document.getElementById('navNotifBadge');
+                                    if (badge) badge.style.display = 'none';
+                                    var unread = dropdown.querySelectorAll('.nav-notif-item.unread');
+                                    for (var i = 0; i < unread.length; i++) {
+                                        unread[i].classList.remove('unread');
+                                    }
+                                })
+                                .catch(function () {});
+                        });
+                    }
+                })
+                .catch(function () {
+                    dropdown.innerHTML = '<div class="nav-notif-empty">Could not load notifications.</div>';
+                });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+            if (wrapper && !wrapper.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Poll for new notifications every 60s
+        setInterval(function () {
+            fetch('/api/forum/notifications/count')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var badge = document.getElementById('navNotifBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(function () {});
+        }, 60000);
     }
 
     // ── Init ──
