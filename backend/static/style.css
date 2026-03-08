@@ -985,6 +985,10 @@ body {
     background: rgba(255, 255, 255, 0.03);
 }
 
+[data-theme="dark"] .lb-name-link {
+    color: var(--ro-text);
+}
+
 [data-theme="dark"] .btn-toggle {
     background: var(--ro-card-bg);
     color: var(--ro-text);
