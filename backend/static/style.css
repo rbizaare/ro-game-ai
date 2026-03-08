@@ -936,7 +936,11 @@ body {
 
 /* ===== DARK MODE TOGGLE ===== */
 .dark-mode-toggle {
-    background: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 9999;
+    background: var(--ro-brown-dark, #3b2a1a);
     border: 1px solid rgba(212, 168, 67, 0.3);
     color: var(--ro-gold-bright);
     font-size: 1.1rem;

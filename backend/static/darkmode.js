@@ -5,23 +5,12 @@
     if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Inject toggle button into nav
-        var nav = document.querySelector('.site-nav');
-        if (!nav) return;
-
         var btn = document.createElement('button');
         btn.className = 'dark-mode-toggle';
         btn.setAttribute('aria-label', 'Toggle dark mode');
         btn.title = 'Toggle dark mode';
         updateIcon(btn);
-
-        // Insert before hamburger or at end of nav
-        var hamburger = nav.querySelector('.nav-hamburger');
-        if (hamburger) {
-            nav.insertBefore(btn, hamburger);
-        } else {
-            nav.appendChild(btn);
-        }
+        document.body.appendChild(btn);
 
         btn.addEventListener('click', function() {
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
