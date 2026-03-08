@@ -13,7 +13,8 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.exceptions import HTTPException
 from pydantic import BaseModel
 from ai_helper import get_top_monsters_by_exp, ask_ai_hybrid, detect_intent
 from chat_logger import log_chat, get_logs as get_chat_logs
@@ -74,6 +75,39 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 
 def get_db():
     return sqlite3.connect(DB_PATH)
+
+
+# ── Health check ──
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
+# ── robots.txt ──
+_ROBOTS_TXT = """User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /logs
+Sitemap: /sitemap.txt
+"""
+
+@app.get("/robots.txt")
+def robots_txt():
+    return PlainTextResponse(_ROBOTS_TXT)
+
+
+# ── Sitemap ──
+_SITEMAP_TXT = """/
+/chat
+/streamers
+/servers
+/forum
+"""
+
+@app.get("/sitemap.txt")
+def sitemap_txt():
+    return PlainTextResponse(_SITEMAP_TXT, media_type="text/plain")
 
 
 @app.get("/")
@@ -649,3 +683,12 @@ def find_item_sources(item_name: str):
             for r in rows
         ]
     }
+
+
+# ── 404 handler ──
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    # Return JSON for API routes, HTML page for everything else
+    if request.url.path.startswith("/api/"):
+        return PlainTextResponse("Not found", status_code=404)
+    return FileResponse(os.path.join(BASE_DIR, "static", "404.html"), status_code=404)

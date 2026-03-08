@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found — RO PH Community Hub</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta name="description" content="The page you're looking for doesn't exist.">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/darkmode.js"></script>
+    <script src="/static/auth-ui.js" defer></script>
+    <style>
+        .error-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - var(--nav-height) - 100px);
+            text-align: center;
+            padding: 2rem;
+        }
+        .error-code {
+            font-family: 'Press Start 2P', 'Cinzel', serif;
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--ro-gold);
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+        }
+        .error-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--ro-brown);
+            margin-bottom: 1rem;
+        }
+        [data-theme="dark"] .error-title {
+            color: var(--ro-gold-bright);
+        }
+        .error-msg {
+            color: var(--ro-text-light);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+        .error-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">RO PH Hub</a>
+        <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+        <ul class="nav-links">
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/streamers">Streamers</a></li>
+            <li><a href="/servers">Servers</a></li>
+            <li><a href="/forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <div class="error-page">
+        <div class="error-code">404</div>
+        <h1 class="error-title">Dead Branch Used... Nothing Happened!</h1>
+        <p class="error-msg">The page you're looking for has been warped to another dimension. Maybe it was never here, or maybe a Baphomet got to it first.</p>
+        <div class="error-links">
+            <a href="/" class="btn-primary">Back to Town</a>
+            <a href="/forum" class="btn-secondary">Visit Forum</a>
+            <a href="/chat" class="btn-secondary">Ask Assistant</a>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
+    </footer>
+
+    <script src="/static/emotes.js"></script>
+    <script src="/static/shoutbox.js"></script>
+</body>
+</html>
