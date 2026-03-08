@@ -40,9 +40,11 @@
                     '<a href="/auth/login?redirect_to=' + encodeURIComponent(location.pathname) + '">Sign in</a> to chat' +
                 '</p>' +
                 '<form class="shoutbox-panel-form" id="shoutboxForm" style="display:none;">' +
-                    '<input type="text" id="shoutboxInput" class="shoutbox-panel-input" placeholder="Say something..." maxlength="200" autocomplete="off">' +
+                    '<button type="button" class="shoutbox-emote-btn" id="shoutboxEmoteBtn" title="Emotes">&#128522;</button>' +
+                    '<input type="text" id="shoutboxInput" class="shoutbox-panel-input" placeholder="Say something... (use /heh /lv etc.)" maxlength="200" autocomplete="off">' +
                     '<button type="submit" class="shoutbox-panel-send">&#10148;</button>' +
                 '</form>' +
+                '<div class="shoutbox-emote-picker" id="shoutboxEmotePicker" style="display:none;"></div>' +
             '</div>' +
         '</div>';
     document.body.appendChild(wrapper);
@@ -88,7 +90,7 @@
                     '<span class="sb-msg-name">' + escapeHtml(msg.display_name) + '</span>' +
                     '<span class="sb-msg-time">' + timeAgo(msg.created_at) + '</span>' +
                 '</div>' +
-                '<div class="sb-msg-text">' + escapeHtml(msg.message) + '</div>' +
+                '<div class="sb-msg-text">' + renderEmotesInHtml(escapeHtml(msg.message)) + '</div>' +
             '</div>' +
         '</div>';
     }
@@ -148,12 +150,53 @@
     }
     connectWs();
 
+    // ── Emote Picker ──
+    var emoteBtn = document.getElementById('shoutboxEmoteBtn');
+    var emotePicker = document.getElementById('shoutboxEmotePicker');
+    var emotePickerOpen = false;
+
+    if (emotePicker && typeof RO_EMOTES !== 'undefined') {
+        var grid = '';
+        RO_EMOTES.forEach(function (e) {
+            grid += '<button type="button" class="emote-pick" data-cmd="' + e.cmd + '" title="' + e.cmd + ' ' + e.name + '">' +
+                '<img src="/static/emotes/' + e.file + '" alt="' + e.cmd + '">' +
+            '</button>';
+        });
+        emotePicker.innerHTML = grid;
+
+        emotePicker.addEventListener('click', function (ev) {
+            var btn = ev.target.closest('.emote-pick');
+            if (!btn) return;
+            var cmd = btn.getAttribute('data-cmd');
+            if (input) {
+                var v = input.value;
+                input.value = v + (v && !v.endsWith(' ') ? ' ' : '') + cmd + ' ';
+                input.focus();
+            }
+        });
+    }
+
+    if (emoteBtn) {
+        emoteBtn.addEventListener('click', function () {
+            emotePickerOpen = !emotePickerOpen;
+            emotePicker.style.display = emotePickerOpen ? 'grid' : 'none';
+            emoteBtn.classList.toggle('active', emotePickerOpen);
+        });
+    }
+
     // ── Send message ──
     if (form && input) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             var text = input.value.trim();
             if (!text || text.length > MAX_CHARS) return;
+
+            // Close emote picker on send
+            if (emotePickerOpen) {
+                emotePickerOpen = false;
+                emotePicker.style.display = 'none';
+                if (emoteBtn) emoteBtn.classList.remove('active');
+            }
 
             fetch('/api/shoutbox/messages', {
                 method: 'POST',

@@ -1640,6 +1640,85 @@ body {
     color: var(--ro-text);
 }
 
+/* ── Emote picker ── */
+.shoutbox-emote-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #d4c5a0;
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.shoutbox-emote-btn:hover,
+.shoutbox-emote-btn.active {
+    background: rgba(196,168,104,0.15);
+}
+
+.shoutbox-emote-picker {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    border-top: 1px solid #e0d5bc;
+    background: #fdf8ed;
+}
+
+.emote-pick {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    transition: background 0.12s;
+}
+
+.emote-pick:hover {
+    background: rgba(196,168,104,0.2);
+}
+
+.emote-pick img {
+    max-width: 28px;
+    max-height: 28px;
+    image-rendering: pixelated;
+}
+
+/* Inline emotes in messages */
+.ro-emote {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    image-rendering: pixelated;
+    margin: 0 1px;
+}
+
+[data-theme="dark"] .shoutbox-emote-picker {
+    background: var(--ro-card-bg);
+    border-top-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .shoutbox-emote-btn {
+    border-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .emote-pick:hover {
+    background: rgba(255,255,255,0.1);
+}
+
 /* Mobile adjustments */
 @media (max-width: 600px) {
     #shoutbox-float {
@@ -1661,5 +1740,10 @@ body {
         right: 0;
         bottom: 60px;
         max-height: 400px;
+    }
+
+    .shoutbox-emote-picker {
+        grid-template-columns: repeat(6, 1fr);
+        max-height: 150px;
     }
 }
