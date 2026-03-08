@@ -1130,148 +1130,131 @@ body {
 }
 
 
-/* ===== MVP BOARD ===== */
-.mvp-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+/* ===== FLOATING SHOUTBOX (Chat Bubble) ===== */
+#shoutbox-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9000;
+    font-family: 'Segoe UI', Roboto, sans-serif;
 }
 
-.mvp-panel {
-    background: var(--ro-card-bg, #fff);
-    border: 1px solid rgba(139, 105, 20, 0.15);
-    border-radius: 10px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.mvp-panel-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.95rem;
-    color: var(--ro-gold);
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-.mvp-empty {
-    text-align: center;
-    color: var(--ro-text-light);
-    font-size: 0.85rem;
-    padding: 1rem 0;
-}
-
-/* MVP Streamer Card */
-.mvp-streamer-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.mvp-streamer-avatar {
+/* Bubble button */
+.shoutbox-bubble {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--ro-gold);
-    flex-shrink: 0;
-}
-
-.mvp-streamer-avatar-placeholder {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--ro-gold);
+    background: linear-gradient(135deg, var(--ro-gold) 0%, var(--ro-gold-bright) 100%);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.shoutbox-bubble:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.shoutbox-bubble.active {
+    transform: scale(0.95);
+}
+
+.shoutbox-bubble-icon {
     font-size: 1.5rem;
-    flex-shrink: 0;
+    line-height: 1;
 }
 
-.mvp-streamer-name {
-    font-weight: 600;
-    color: var(--ro-text);
-    text-decoration: none;
-    font-size: 1rem;
-}
-
-.mvp-streamer-name:hover {
-    color: var(--ro-gold);
-}
-
-.mvp-streamer-stat {
-    color: var(--ro-text-light);
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-}
-
-/* MVP Thread Card */
-.mvp-thread-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.mvp-thread-title {
-    font-weight: 600;
-    color: var(--ro-text);
-    text-decoration: none;
-    font-size: 0.95rem;
-    line-height: 1.4;
-}
-
-.mvp-thread-title:hover {
-    color: var(--ro-gold);
-}
-
-.mvp-thread-meta {
+.shoutbox-bubble-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--ro-text-light);
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.mvp-thread-replies {
-    margin-left: auto;
-    font-weight: 600;
-    color: var(--ro-gold);
-}
-
-/* Dark mode overrides for MVP */
-[data-theme="dark"] .mvp-panel {
-    background: var(--ro-card-bg);
-    border-color: var(--ro-card-border);
-}
-
-[data-theme="dark"] .mvp-streamer-name,
-[data-theme="dark"] .mvp-thread-title {
-    color: var(--ro-text);
-}
-
-
-/* ===== SHOUTBOX ===== */
-.shoutbox-messages {
-    height: 350px;
-    overflow-y: auto;
-    border: 1px solid rgba(139, 105, 20, 0.15);
-    border-radius: 10px;
-    background: var(--ro-card-bg, #fff);
-    padding: 0.75rem;
+/* Chat panel */
+.shoutbox-panel {
+    position: absolute;
+    bottom: 68px;
+    right: 0;
+    width: 340px;
+    max-height: 460px;
+    background: var(--ro-parchment-light, #faf5eb);
+    border: 1px solid rgba(139, 105, 20, 0.2);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    overflow: hidden;
 }
 
-.shoutbox-msg {
+.shoutbox-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, var(--ro-brown-dark) 0%, var(--ro-brown) 100%);
+    border-bottom: 2px solid var(--ro-gold);
+}
+
+.shoutbox-panel-title {
+    font-family: 'Cinzel', serif;
+    color: var(--ro-gold-bright);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.shoutbox-panel-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.shoutbox-panel-close:hover {
+    color: #fff;
+}
+
+/* Messages area */
+.shoutbox-panel-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-height: 250px;
+    max-height: 320px;
+}
+
+.sb-msg {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    padding: 0.3rem 0.25rem;
 }
 
-.shoutbox-avatar {
-    width: 32px;
-    height: 32px;
+.sb-msg-avatar {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
     background: var(--ro-gold);
@@ -1281,128 +1264,154 @@ body {
     justify-content: center;
 }
 
-.shoutbox-avatar-img {
+.sb-msg-avatar-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.shoutbox-avatar-placeholder {
+.sb-msg-avatar-ph {
     color: #fff;
     font-weight: 700;
+    font-size: 0.65rem;
+}
+
+.sb-msg-body {
+    min-width: 0;
+    flex: 1;
+}
+
+.sb-msg-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+}
+
+.sb-msg-name {
+    font-weight: 600;
+    color: var(--ro-brown-dark, #3b2a1a);
     font-size: 0.75rem;
 }
 
-.shoutbox-msg-body {
-    min-width: 0;
-}
-
-.shoutbox-msg-header {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-}
-
-.shoutbox-name {
-    font-weight: 600;
-    color: var(--ro-text);
-    text-decoration: none;
-    font-size: 0.8rem;
-}
-
-.shoutbox-name:hover {
-    color: var(--ro-gold);
-}
-
-.shoutbox-time {
+.sb-msg-time {
     color: var(--ro-text-light);
-    font-size: 0.7rem;
+    font-size: 0.6rem;
 }
 
-.shoutbox-text {
-    display: block;
-    font-size: 0.85rem;
+.sb-msg-text {
+    font-size: 0.8rem;
     color: var(--ro-text);
-    line-height: 1.4;
+    line-height: 1.35;
     word-break: break-word;
 }
 
-.shoutbox-input-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+/* Footer / input area */
+.shoutbox-panel-footer {
+    padding: 0.5rem 0.6rem;
+    border-top: 1px solid rgba(139, 105, 20, 0.15);
+    background: var(--ro-parchment, #f5efe0);
 }
 
-.shoutbox-input {
+.shoutbox-panel-login {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--ro-text-light);
+    margin: 0;
+    padding: 0.25rem 0;
+}
+
+.shoutbox-panel-login a {
+    color: var(--ro-gold);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.shoutbox-panel-form {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.shoutbox-panel-input {
     flex: 1;
-    padding: 0.6rem 0.75rem;
+    padding: 0.5rem 0.65rem;
     border: 1px solid rgba(139, 105, 20, 0.2);
-    border-radius: 8px;
+    border-radius: 20px;
     background: var(--ro-input-bg, #fff);
     color: var(--ro-text);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     outline: none;
 }
 
-.shoutbox-input:focus {
+.shoutbox-panel-input:focus {
     border-color: var(--ro-gold);
 }
 
-.shoutbox-char-count {
-    font-size: 0.7rem;
-    color: var(--ro-text-light);
-    min-width: 40px;
-    text-align: center;
-}
-
-.shoutbox-char-count.over-limit {
-    color: #e74c3c;
-    font-weight: 600;
-}
-
-.shoutbox-send-btn {
-    padding: 0.6rem 1.25rem;
+.shoutbox-panel-send {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
     background: var(--ro-gold);
     color: #fff;
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
     cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     transition: background 0.2s;
 }
 
-.shoutbox-send-btn:hover {
+.shoutbox-panel-send:hover {
     background: var(--ro-gold-bright);
 }
 
-.shoutbox-login-prompt {
-    text-align: center;
-    margin-top: 0.75rem;
-    font-size: 0.85rem;
-    color: var(--ro-text-light);
-}
-
-.shoutbox-login-prompt a {
-    color: var(--ro-gold);
-    font-weight: 600;
-}
-
-/* Dark mode overrides for Shoutbox */
-[data-theme="dark"] .shoutbox-messages {
-    background: var(--ro-card-bg);
+/* Dark mode */
+[data-theme="dark"] .shoutbox-panel {
+    background: var(--ro-parchment-light);
     border-color: var(--ro-card-border);
 }
 
-[data-theme="dark"] .shoutbox-input {
+[data-theme="dark"] .shoutbox-panel-footer {
+    background: var(--ro-card-bg);
+    border-top-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .shoutbox-panel-input {
     background: var(--ro-input-bg);
     border-color: var(--ro-card-border);
     color: var(--ro-text);
 }
 
-[data-theme="dark"] .shoutbox-name,
-[data-theme="dark"] .shoutbox-text {
+[data-theme="dark"] .sb-msg-name {
+    color: var(--ro-gold-bright);
+}
+
+[data-theme="dark"] .sb-msg-text {
     color: var(--ro-text);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    #shoutbox-float {
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .shoutbox-bubble {
+        width: 48px;
+        height: 48px;
+    }
+
+    .shoutbox-bubble-icon {
+        font-size: 1.25rem;
+    }
+
+    .shoutbox-panel {
+        width: calc(100vw - 32px);
+        right: 0;
+        bottom: 60px;
+        max-height: 400px;
+    }
 }

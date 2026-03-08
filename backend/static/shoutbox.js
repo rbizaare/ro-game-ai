@@ -1,16 +1,11 @@
-/* Shoutbox — lightweight real-time chat for the homepage */
+/* Shoutbox — floating chat bubble (like FB Messenger), visible on all pages */
 (function () {
-    var container = document.getElementById('shoutboxMessages');
-    var form = document.getElementById('shoutboxForm');
-    var input = document.getElementById('shoutboxInput');
-    var charCount = document.getElementById('shoutboxCharCount');
-    var loginPrompt = document.getElementById('shoutboxLoginPrompt');
-    if (!container) return;
-
     var MAX_MESSAGES = 50;
     var MAX_CHARS = 200;
     var currentUser = null;
     var ws = null;
+    var isOpen = false;
+    var unreadCount = 0;
 
     function escapeHtml(s) {
         var d = document.createElement('div');
@@ -26,20 +21,74 @@
         return Math.floor(diff / 86400) + 'd ago';
     }
 
+    // ── Inject HTML ──
+    var wrapper = document.createElement('div');
+    wrapper.id = 'shoutbox-float';
+    wrapper.innerHTML =
+        '<button class="shoutbox-bubble" id="shoutboxBubble" title="Community Shoutbox">' +
+            '<span class="shoutbox-bubble-icon">&#128172;</span>' +
+            '<span class="shoutbox-bubble-badge" id="shoutboxBadge" style="display:none;">0</span>' +
+        '</button>' +
+        '<div class="shoutbox-panel" id="shoutboxPanel" style="display:none;">' +
+            '<div class="shoutbox-panel-header">' +
+                '<span class="shoutbox-panel-title">Shoutbox</span>' +
+                '<button class="shoutbox-panel-close" id="shoutboxClose">&times;</button>' +
+            '</div>' +
+            '<div class="shoutbox-panel-messages" id="shoutboxMessages"></div>' +
+            '<div class="shoutbox-panel-footer" id="shoutboxFooter">' +
+                '<p class="shoutbox-panel-login" id="shoutboxLoginPrompt">' +
+                    '<a href="/auth/login?redirect_to=' + encodeURIComponent(location.pathname) + '">Sign in</a> to chat' +
+                '</p>' +
+                '<form class="shoutbox-panel-form" id="shoutboxForm" style="display:none;">' +
+                    '<input type="text" id="shoutboxInput" class="shoutbox-panel-input" placeholder="Say something..." maxlength="200" autocomplete="off">' +
+                    '<button type="submit" class="shoutbox-panel-send">&#10148;</button>' +
+                '</form>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(wrapper);
+
+    var bubble = document.getElementById('shoutboxBubble');
+    var badge = document.getElementById('shoutboxBadge');
+    var panel = document.getElementById('shoutboxPanel');
+    var closeBtn = document.getElementById('shoutboxClose');
+    var container = document.getElementById('shoutboxMessages');
+    var form = document.getElementById('shoutboxForm');
+    var input = document.getElementById('shoutboxInput');
+    var loginPrompt = document.getElementById('shoutboxLoginPrompt');
+
+    // ── Toggle panel ──
+    bubble.addEventListener('click', function () {
+        isOpen = !isOpen;
+        panel.style.display = isOpen ? 'flex' : 'none';
+        bubble.classList.toggle('active', isOpen);
+        if (isOpen) {
+            unreadCount = 0;
+            badge.style.display = 'none';
+            scrollToBottom();
+            if (input && currentUser) input.focus();
+        }
+    });
+
+    closeBtn.addEventListener('click', function () {
+        isOpen = false;
+        panel.style.display = 'none';
+        bubble.classList.remove('active');
+    });
+
+    // ── Rendering ──
     function renderMessage(msg) {
         var avatarHtml = msg.avatar_url
-            ? '<img src="' + escapeHtml(msg.avatar_url) + '" class="shoutbox-avatar-img" alt="">'
-            : '<span class="shoutbox-avatar-placeholder">' + escapeHtml(msg.display_name.charAt(0).toUpperCase()) + '</span>';
+            ? '<img src="' + escapeHtml(msg.avatar_url) + '" class="sb-msg-avatar-img" alt="">'
+            : '<span class="sb-msg-avatar-ph">' + escapeHtml(msg.display_name.charAt(0).toUpperCase()) + '</span>';
 
-        return '<div class="shoutbox-msg">' +
-            '<div class="shoutbox-avatar">' + avatarHtml + '</div>' +
-            '<div class="shoutbox-msg-body">' +
-                '<span class="shoutbox-msg-header">' +
-                    '<a href="/forum/profile/' + msg.user_id + '" class="shoutbox-name">' + escapeHtml(msg.display_name) + '</a>' +
-                    (msg.rank_title ? ' <span class="rank-badge">' + escapeHtml(msg.rank_title) + '</span>' : '') +
-                    ' <span class="shoutbox-time">' + timeAgo(msg.created_at) + '</span>' +
-                '</span>' +
-                '<span class="shoutbox-text">' + escapeHtml(msg.message) + '</span>' +
+        return '<div class="sb-msg">' +
+            '<div class="sb-msg-avatar">' + avatarHtml + '</div>' +
+            '<div class="sb-msg-body">' +
+                '<div class="sb-msg-header">' +
+                    '<span class="sb-msg-name">' + escapeHtml(msg.display_name) + '</span>' +
+                    '<span class="sb-msg-time">' + timeAgo(msg.created_at) + '</span>' +
+                '</div>' +
+                '<div class="sb-msg-text">' + escapeHtml(msg.message) + '</div>' +
             '</div>' +
         '</div>';
     }
@@ -48,21 +97,23 @@
         container.scrollTop = container.scrollHeight;
     }
 
-    function trimMessages() {
-        while (container.children.length > MAX_MESSAGES) {
-            container.removeChild(container.firstChild);
-        }
-    }
-
     function appendMessage(msg) {
         var div = document.createElement('div');
         div.innerHTML = renderMessage(msg);
         container.appendChild(div.firstChild);
-        trimMessages();
-        scrollToBottom();
+        while (container.children.length > MAX_MESSAGES) {
+            container.removeChild(container.firstChild);
+        }
+        if (isOpen) {
+            scrollToBottom();
+        } else {
+            unreadCount++;
+            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            badge.style.display = 'flex';
+        }
     }
 
-    // Load initial messages
+    // ── Load messages ──
     fetch('/api/shoutbox/messages')
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -75,7 +126,7 @@
             scrollToBottom();
         });
 
-    // Check auth — /api/auth/me returns user object directly (or null)
+    // ── Auth check ──
     fetch('/api/auth/me')
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -86,34 +137,18 @@
             }
         });
 
-    // WebSocket for real-time updates
+    // ── WebSocket ──
     function connectWs() {
         var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
         ws = new WebSocket(protocol + '//' + location.host + '/ws/shoutbox');
-
         ws.onmessage = function (e) {
-            try {
-                var msg = JSON.parse(e.data);
-                appendMessage(msg);
-            } catch (err) { /* ignore */ }
+            try { appendMessage(JSON.parse(e.data)); } catch (err) { /* ignore */ }
         };
-
-        ws.onclose = function () {
-            setTimeout(connectWs, 3000);
-        };
+        ws.onclose = function () { setTimeout(connectWs, 3000); };
     }
     connectWs();
 
-    // Character counter
-    if (input && charCount) {
-        input.addEventListener('input', function () {
-            var len = input.value.length;
-            charCount.textContent = len + '/' + MAX_CHARS;
-            charCount.classList.toggle('over-limit', len > MAX_CHARS - 20);
-        });
-    }
-
-    // Form submit
+    // ── Send message ──
     if (form && input) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -124,21 +159,11 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text }),
-            })
-                .then(function (r) {
-                    if (r.status === 429) {
-                        alert('Slow down! Max 10 messages per minute.');
-                        return;
-                    }
-                    if (r.status === 401) {
-                        window.location.href = '/auth/login?redirect_to=/';
-                        return;
-                    }
-                    if (r.ok) {
-                        input.value = '';
-                        if (charCount) charCount.textContent = '0/' + MAX_CHARS;
-                    }
-                });
+            }).then(function (r) {
+                if (r.status === 429) { alert('Slow down! Max 10 messages per minute.'); return; }
+                if (r.status === 401) { window.location.href = '/auth/login?redirect_to=' + encodeURIComponent(location.pathname); return; }
+                if (r.ok) { input.value = ''; }
+            });
         });
     }
 })();

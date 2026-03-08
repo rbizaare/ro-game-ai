@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RO PH Community Hub</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/forum.css">
     <script src="/static/darkmode.js"></script>
 </head>
 <body>
@@ -169,25 +168,6 @@
             <div class="section-cta">
                 <a href="/servers" class="btn-primary">View All Servers</a>
             </div>
-        </div>
-    </section>
-
-    <!-- Shoutbox -->
-    <section class="section-alt" id="shoutbox">
-        <div class="section">
-            <h2 class="section-title">Shoutbox</h2>
-            <p class="section-subtitle">Quick banter for the community</p>
-            <div class="shoutbox-messages" id="shoutboxMessages">
-                <p class="mvp-empty">Loading messages...</p>
-            </div>
-            <form class="shoutbox-input-row" id="shoutboxForm" style="display:none;">
-                <input type="text" id="shoutboxInput" class="shoutbox-input" placeholder="Say something..." maxlength="200" autocomplete="off">
-                <span class="shoutbox-char-count" id="shoutboxCharCount">0/200</span>
-                <button type="submit" class="shoutbox-send-btn">Send</button>
-            </form>
-            <p class="shoutbox-login-prompt" id="shoutboxLoginPrompt">
-                <a href="/auth/login?redirect_to=/">Sign in with Google</a> to join the conversation.
-            </p>
         </div>
     </section>
 
