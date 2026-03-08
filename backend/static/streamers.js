@@ -228,12 +228,6 @@ const SOCIAL_ICONS = {
 
 /* ===== Utilities ===== */
 
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
 const ALLOWED_PLATFORMS = ['twitch', 'youtube', 'facebook'];
 
 function safePlatform(p) {

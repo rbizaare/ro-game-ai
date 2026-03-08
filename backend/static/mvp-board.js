@@ -3,12 +3,6 @@
     var board = document.getElementById('mvpBoard');
     if (!board) return;
 
-    function escapeHtml(s) {
-        var d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-    }
-
     var medals = ['&#x1F947;', '&#x1F948;', '&#x1F949;', '4', '5'];
 
     function renderForumMvps(mvps) {

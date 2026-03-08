@@ -12,9 +12,9 @@
     <meta property="og:site_name" content="RO PH Community Hub">
     <meta name="twitter:card" content="summary">
     <meta name="theme-color" content="#3a1f04">
-${SEO_BLOCK}
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/forum.css">
+    <script src="/static/utils.js"></script>
     <script src="/static/darkmode.js"></script>
     <script src="/static/auth-ui.js" defer></script>
 </head>
@@ -60,22 +60,6 @@ ${SEO_BLOCK}
     /* ===== Thread Page JavaScript ===== */
 
     let _currentUser = null;
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str || '';
-        return div.innerHTML;
-    }
-
-    function timeAgo(iso) {
-        if (!iso) return '';
-        const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-        if (diff < 60) return 'just now';
-        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-        if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-        return new Date(iso).toLocaleDateString();
-    }
 
     async function fetchCurrentUser() {
         try {
@@ -223,7 +207,7 @@ ${SEO_BLOCK}
     async function submitReply(threadId) {
         const body = document.getElementById('replyBody').value.trim();
         const btn = document.getElementById('submitReply');
-        if (!body) return alert('Reply cannot be empty.');
+        if (!body) return showToast('Reply cannot be empty.', 'warning');
 
         btn.disabled = true;
         btn.textContent = 'Posting...';
@@ -240,7 +224,7 @@ ${SEO_BLOCK}
             }
             window.location.reload();
         } catch (e) {
-            alert(e.message);
+            showToast(e.message, 'error');
             btn.disabled = false;
             btn.textContent = 'Post Reply';
         }

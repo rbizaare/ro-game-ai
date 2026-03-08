@@ -7,20 +7,6 @@
     var isOpen = false;
     var unreadCount = 0;
 
-    function escapeHtml(s) {
-        var d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-    }
-
-    function timeAgo(iso) {
-        var diff = (Date.now() - new Date(iso).getTime()) / 1000;
-        if (diff < 60) return 'just now';
-        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-        return Math.floor(diff / 86400) + 'd ago';
-    }
-
     // ── Inject HTML ──
     var wrapper = document.createElement('div');
     wrapper.id = 'shoutbox-float';
@@ -203,7 +189,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text }),
             }).then(function (r) {
-                if (r.status === 429) { alert('Slow down! Max 10 messages per minute.'); return; }
+                if (r.status === 429) { showToast('Slow down! Max 10 messages per minute.', 'warning'); return; }
                 if (r.status === 401) { window.location.href = '/auth/login?redirect_to=' + encodeURIComponent(location.pathname); return; }
                 if (r.ok) { input.value = ''; }
             });

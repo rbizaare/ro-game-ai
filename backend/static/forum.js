@@ -2,48 +2,15 @@
 
 let _currentUser = null;
 
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
-}
-
-function timeAgo(iso) {
-    if (!iso) return '';
-    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-    if (diff < 60) return 'just now';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-    if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-    return new Date(iso).toLocaleDateString();
-}
-
 // ── Auth ──
 
 async function fetchCurrentUser() {
     try {
         const res = await fetch('/api/auth/me');
         const data = await res.json();
-        _currentUser = data;
+        _currentUser = data && data.id ? data : null;
     } catch {
         _currentUser = null;
-    }
-    renderAuthBar();
-}
-
-function renderAuthBar() {
-    const bar = document.getElementById('authBar');
-    if (!bar) return;
-    if (_currentUser) {
-        bar.innerHTML = `
-            <div class="forum-auth-user">
-                <img class="forum-auth-avatar" src="${escapeHtml(_currentUser.avatar_url)}" alt="">
-                <a href="/forum/profile/${_currentUser.id}" style="color:inherit;text-decoration:none;">${escapeHtml(_currentUser.display_name)}</a>
-                ${_currentUser.is_admin ? '<span style="font-size:0.7rem;color:var(--ro-gold);font-weight:600;">ADMIN</span>' : ''}
-            </div>
-        `;
-    } else {
-        bar.innerHTML = '<a href="/auth/login" class="btn-google">Sign in with Google</a>';
     }
 }
 
@@ -80,7 +47,7 @@ function renderSearchBar() {
 
 function doSearch() {
     const q = document.getElementById('searchInput').value.trim();
-    if (q.length < 2) return alert('Search query must be at least 2 characters.');
+    if (q.length < 2) return showToast('Search query must be at least 2 characters.', 'warning');
     navigate('search/' + encodeURIComponent(q));
 }
 
@@ -277,8 +244,8 @@ async function submitNewThread(slug) {
     const body = document.getElementById('threadBody').value.trim();
     const btn = document.getElementById('submitThread');
 
-    if (!title || title.length < 3) return alert('Title must be at least 3 characters.');
-    if (!body) return alert('Post body cannot be empty.');
+    if (!title || title.length < 3) return showToast('Title must be at least 3 characters.', 'warning');
+    if (!body) return showToast('Post body cannot be empty.', 'warning');
 
     btn.disabled = true;
     btn.textContent = 'Posting...';
@@ -296,7 +263,7 @@ async function submitNewThread(slug) {
         const data = await res.json();
         window.location.href = `/forum/thread/${data.id}`;
     } catch (e) {
-        alert(e.message);
+        showToast(e.message, 'error');
         btn.disabled = false;
         btn.textContent = 'Post Thread';
     }

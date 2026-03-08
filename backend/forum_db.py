@@ -5,7 +5,7 @@ import sqlite3
 import time
 from datetime import datetime, timezone
 
-FORUM_DB_PATH = os.path.join(os.path.dirname(__file__), "forum.db")
+FORUM_DB_PATH = os.getenv("FORUM_DB_PATH", os.path.join(os.path.dirname(__file__), "forum.db"))
 
 CATEGORIES = [
     ("streamer-reviews", "Streamer Reviews", "Reviews and discussions about RO PH streamers", 1),

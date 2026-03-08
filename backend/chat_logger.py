@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LOG_DB_PATH = os.path.join(BASE_DIR, "logs.db")
+LOG_DB_PATH = os.getenv("LOG_DB_PATH", os.path.join(BASE_DIR, "logs.db"))
 
 _UNANSWERED_PATTERNS = [
     "i didn't understand that",
