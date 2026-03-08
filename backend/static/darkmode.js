@@ -10,7 +10,14 @@
         btn.setAttribute('aria-label', 'Toggle dark mode');
         btn.title = 'Toggle dark mode';
         updateIcon(btn);
-        document.body.appendChild(btn);
+
+        // Append to nav if available, otherwise to body
+        var nav = document.querySelector('.site-nav');
+        if (nav) {
+            nav.appendChild(btn);
+        } else {
+            document.body.appendChild(btn);
+        }
 
         btn.addEventListener('click', function() {
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
