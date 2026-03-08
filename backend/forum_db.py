@@ -94,6 +94,14 @@ def init_forum_db():
             created_at TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read);
+
+        CREATE TABLE IF NOT EXISTS shoutbox_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            message TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_shoutbox_created ON shoutbox_messages(created_at);
     """)
 
     # Seed categories
@@ -466,3 +474,98 @@ def mark_notifications_read(user_id: int):
     conn.execute("UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0", (user_id,))
     conn.commit()
     conn.close()
+
+
+# ── Shoutbox helpers ──
+
+def get_recent_shoutbox_messages(limit: int = 50) -> list[dict]:
+    """Get the most recent shoutbox messages with user info."""
+    conn = get_forum_db()
+    rows = conn.execute("""
+        SELECT s.id, s.message, s.created_at, s.user_id,
+               u.display_name, u.avatar_url
+        FROM shoutbox_messages s
+        JOIN users u ON u.id = s.user_id
+        ORDER BY s.created_at DESC
+        LIMIT ?
+    """, (limit,)).fetchall()
+    conn.close()
+    # Return in chronological order (oldest first)
+    return [dict(r) for r in reversed(rows)]
+
+
+def create_shoutbox_message(user_id: int, message: str) -> dict:
+    """Create a shoutbox message and return it with user info."""
+    conn = get_forum_db()
+    now = datetime.now(timezone.utc).isoformat()
+    cur = conn.execute(
+        "INSERT INTO shoutbox_messages (user_id, message, created_at) VALUES (?, ?, ?)",
+        (user_id, message, now),
+    )
+    msg_id = cur.lastrowid
+    # Cleanup: remove messages older than 24h (probabilistic, ~1 in 10 writes)
+    import random
+    if random.randint(1, 10) == 1:
+        from datetime import timedelta
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+        conn.execute("DELETE FROM shoutbox_messages WHERE created_at < ?", (cutoff,))
+    conn.commit()
+    user = conn.execute("SELECT display_name, avatar_url FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return {
+        "id": msg_id,
+        "user_id": user_id,
+        "message": message,
+        "created_at": now,
+        "display_name": user["display_name"] if user else "Anonymous",
+        "avatar_url": user["avatar_url"] if user else "",
+    }
+
+
+# ── MVP Board helpers ──
+
+def get_weekly_forum_mvps(limit: int = 5) -> list[dict]:
+    """Get top forum contributors for the current week (Mon-Sun)."""
+    conn = get_forum_db()
+    now = datetime.now(timezone.utc)
+    # Monday 00:00 of current week
+    monday = now - __import__("datetime").timedelta(days=now.weekday())
+    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    rows = conn.execute("""
+        SELECT u.id as user_id, u.display_name, u.avatar_url,
+               (SELECT COUNT(*) FROM threads WHERE user_id = u.id AND created_at >= ?) +
+               (SELECT COUNT(*) FROM replies WHERE user_id = u.id AND created_at >= ?) AS post_count
+        FROM users u
+        WHERE post_count > 0
+        ORDER BY post_count DESC
+        LIMIT ?
+    """, (week_start, week_start, limit)).fetchall()
+    conn.close()
+
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["rank_title"] = get_user_rank_title(get_user_post_count(d["user_id"]))
+        result.append(d)
+    return result
+
+
+def get_weekly_best_thread() -> dict | None:
+    """Get the thread with most replies created this week."""
+    conn = get_forum_db()
+    now = datetime.now(timezone.utc)
+    monday = now - __import__("datetime").timedelta(days=now.weekday())
+    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    row = conn.execute("""
+        SELECT t.id, t.title, t.reply_count, t.created_at,
+               u.display_name as author_name, u.avatar_url as author_avatar
+        FROM threads t
+        JOIN users u ON u.id = t.user_id
+        WHERE t.created_at >= ?
+        ORDER BY t.reply_count DESC
+        LIMIT 1
+    """, (week_start,)).fetchone()
+    conn.close()
+    return dict(row) if row else None

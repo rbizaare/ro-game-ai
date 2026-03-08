@@ -13,6 +13,7 @@ from forum_db import (
     get_user_post_count, get_user_rank_title, get_user_profile,
     get_forum_db, search_threads,
     get_unread_count, get_notifications, mark_notifications_read,
+    get_weekly_forum_mvps, get_weekly_best_thread,
 )
 
 forum_router = APIRouter(prefix="/api/forum", tags=["forum"])
@@ -285,3 +286,31 @@ def api_mark_read(request: Request):
     user = require_auth(request)
     mark_notifications_read(user["id"])
     return {"ok": True}
+
+
+# ── MVP Board endpoint ──
+
+_mvp_cache: dict = {"data": None, "expires": 0}
+
+
+@forum_router.get("/mvp-board")
+def api_mvp_board():
+    """Weekly MVP board — top contributors and best thread."""
+    now = time.time()
+    if _mvp_cache["data"] is not None and now < _mvp_cache["expires"]:
+        return _mvp_cache["data"]
+
+    from datetime import datetime, timezone, timedelta
+    today = datetime.now(timezone.utc)
+    monday = today - timedelta(days=today.weekday())
+    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d")
+
+    result = {
+        "week_start": week_start,
+        "forum_mvps": get_weekly_forum_mvps(5),
+        "best_thread": get_weekly_best_thread(),
+    }
+
+    _mvp_cache["data"] = result
+    _mvp_cache["expires"] = now + 900  # 15 min cache
+    return result

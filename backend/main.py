@@ -19,6 +19,7 @@ from ai_helper import get_top_monsters_by_exp, ask_ai_hybrid, detect_intent
 from chat_logger import log_chat, get_logs as get_chat_logs
 from auth import auth_router
 from forum_api import forum_router
+from shoutbox_api import shoutbox_router, shoutbox_ws
 from forum_db import init_forum_db
 import httpx
 import sqlite3
@@ -64,6 +65,8 @@ init_forum_db()
 # Include forum and auth routers
 app.include_router(auth_router)
 app.include_router(forum_router)
+app.include_router(shoutbox_router)
+app.add_api_websocket_route("/ws/shoutbox", shoutbox_ws)
 
 # Serve static frontend files (CSS, JS)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RO PH Community Hub</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/forum.css">
     <script src="/static/darkmode.js"></script>
 </head>
 <body>
@@ -171,6 +172,36 @@
         </div>
     </section>
 
+    <!-- Weekly MVP Board -->
+    <section id="mvp-board">
+        <div class="section">
+            <h2 class="section-title">Weekly MVPs</h2>
+            <p class="section-subtitle">Top contributors and streamer of the week</p>
+            <div class="mvp-grid" id="mvpBoard">
+                <p class="mvp-empty">Loading...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shoutbox -->
+    <section class="section-alt" id="shoutbox">
+        <div class="section">
+            <h2 class="section-title">Shoutbox</h2>
+            <p class="section-subtitle">Quick banter for the community</p>
+            <div class="shoutbox-messages" id="shoutboxMessages">
+                <p class="mvp-empty">Loading messages...</p>
+            </div>
+            <form class="shoutbox-input-row" id="shoutboxForm" style="display:none;">
+                <input type="text" id="shoutboxInput" class="shoutbox-input" placeholder="Say something..." maxlength="200" autocomplete="off">
+                <span class="shoutbox-char-count" id="shoutboxCharCount">0/200</span>
+                <button type="submit" class="shoutbox-send-btn">Send</button>
+            </form>
+            <p class="shoutbox-login-prompt" id="shoutboxLoginPrompt">
+                <a href="/auth/login">Sign in with Google</a> to join the conversation.
+            </p>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="site-footer">
         <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
@@ -178,5 +209,7 @@
     </footer>
 
     <script src="/static/streamers.js"></script>
+    <script src="/static/mvp-board.js"></script>
+    <script src="/static/shoutbox.js"></script>
 </body>
 </html>

@@ -1119,4 +1119,290 @@ body {
         height: 24px;
         font-size: 0.65rem;
     }
+
+    .mvp-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .shoutbox-messages {
+        height: 250px !important;
+    }
+}
+
+
+/* ===== MVP BOARD ===== */
+.mvp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.mvp-panel {
+    background: var(--ro-card-bg, #fff);
+    border: 1px solid rgba(139, 105, 20, 0.15);
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.mvp-panel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    color: var(--ro-gold);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.mvp-empty {
+    text-align: center;
+    color: var(--ro-text-light);
+    font-size: 0.85rem;
+    padding: 1rem 0;
+}
+
+/* MVP Streamer Card */
+.mvp-streamer-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mvp-streamer-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--ro-gold);
+    flex-shrink: 0;
+}
+
+.mvp-streamer-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ro-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mvp-streamer-name {
+    font-weight: 600;
+    color: var(--ro-text);
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.mvp-streamer-name:hover {
+    color: var(--ro-gold);
+}
+
+.mvp-streamer-stat {
+    color: var(--ro-text-light);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* MVP Thread Card */
+.mvp-thread-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mvp-thread-title {
+    font-weight: 600;
+    color: var(--ro-text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.mvp-thread-title:hover {
+    color: var(--ro-gold);
+}
+
+.mvp-thread-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--ro-text-light);
+}
+
+.mvp-thread-replies {
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--ro-gold);
+}
+
+/* Dark mode overrides for MVP */
+[data-theme="dark"] .mvp-panel {
+    background: var(--ro-card-bg);
+    border-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .mvp-streamer-name,
+[data-theme="dark"] .mvp-thread-title {
+    color: var(--ro-text);
+}
+
+
+/* ===== SHOUTBOX ===== */
+.shoutbox-messages {
+    height: 350px;
+    overflow-y: auto;
+    border: 1px solid rgba(139, 105, 20, 0.15);
+    border-radius: 10px;
+    background: var(--ro-card-bg, #fff);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.shoutbox-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.shoutbox-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--ro-gold);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shoutbox-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.shoutbox-avatar-placeholder {
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+
+.shoutbox-msg-body {
+    min-width: 0;
+}
+
+.shoutbox-msg-header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.shoutbox-name {
+    font-weight: 600;
+    color: var(--ro-text);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.shoutbox-name:hover {
+    color: var(--ro-gold);
+}
+
+.shoutbox-time {
+    color: var(--ro-text-light);
+    font-size: 0.7rem;
+}
+
+.shoutbox-text {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--ro-text);
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.shoutbox-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.shoutbox-input {
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid rgba(139, 105, 20, 0.2);
+    border-radius: 8px;
+    background: var(--ro-input-bg, #fff);
+    color: var(--ro-text);
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.shoutbox-input:focus {
+    border-color: var(--ro-gold);
+}
+
+.shoutbox-char-count {
+    font-size: 0.7rem;
+    color: var(--ro-text-light);
+    min-width: 40px;
+    text-align: center;
+}
+
+.shoutbox-char-count.over-limit {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.shoutbox-send-btn {
+    padding: 0.6rem 1.25rem;
+    background: var(--ro-gold);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.shoutbox-send-btn:hover {
+    background: var(--ro-gold-bright);
+}
+
+.shoutbox-login-prompt {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--ro-text-light);
+}
+
+.shoutbox-login-prompt a {
+    color: var(--ro-gold);
+    font-weight: 600;
+}
+
+/* Dark mode overrides for Shoutbox */
+[data-theme="dark"] .shoutbox-messages {
+    background: var(--ro-card-bg);
+    border-color: var(--ro-card-border);
+}
+
+[data-theme="dark"] .shoutbox-input {
+    background: var(--ro-input-bg);
+    border-color: var(--ro-card-border);
+    color: var(--ro-text);
+}
+
+[data-theme="dark"] .shoutbox-name,
+[data-theme="dark"] .shoutbox-text {
+    color: var(--ro-text);
 }
