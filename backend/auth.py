@@ -1,6 +1,7 @@
 """Google OAuth authentication and session management."""
 
 import os
+import time
 import secrets
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
@@ -26,6 +27,19 @@ serializer = URLSafeTimedSerializer(FORUM_SECRET_KEY)
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+# ── Rate limiting for login ──
+_login_attempts: dict = {}  # ip -> [timestamps]
+
+
+def _check_login_rate(ip: str):
+    """Allow max 10 login attempts per IP per minute."""
+    now = time.time()
+    window = [t for t in _login_attempts.get(ip, []) if now - t < 60]
+    if len(window) >= 10:
+        raise HTTPException(status_code=429, detail="Too many login attempts. Please wait a moment.")
+    window.append(now)
+    _login_attempts[ip] = window
 
 
 def get_current_user(request: Request) -> dict | None:
@@ -62,6 +76,7 @@ def require_admin(request: Request) -> dict:
 @auth_router.get("/auth/login")
 def auth_login(request: Request, redirect_to: str = "/forum"):
     """Redirect to Google OAuth consent screen."""
+    _check_login_rate(request.client.host)
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google OAuth not configured")
 

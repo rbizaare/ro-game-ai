@@ -74,7 +74,7 @@ class CreateReplyRequest(BaseModel):
 
 class BanRequest(BaseModel):
     user_id: int
-    reason: str = ""
+    reason: str = Field("", max_length=500)
     duration_days: int | None = None
 
 

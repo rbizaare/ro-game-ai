@@ -50,6 +50,13 @@
 
     <!-- Footer -->
     <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/forum">Forum</a>
+            <a href="/streamers">Streamers</a>
+            <a href="/servers">Servers</a>
+            <a href="/privacy">Privacy Policy</a>
+        </div>
         <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
         <p>Ragnarok Online &copy; Gravity Co., Ltd. &amp; Lee Myoungjin.</p>
     </footer>
@@ -64,20 +71,6 @@
             const res = await fetch('/api/auth/me');
             _currentUser = await res.json();
         } catch { _currentUser = null; }
-
-        const bar = document.getElementById('authBar');
-        if (_currentUser) {
-            bar.innerHTML = `
-                <div class="forum-auth-user">
-                    <img class="forum-auth-avatar" src="${escapeHtml(_currentUser.avatar_url)}" alt="">
-                    <span>${escapeHtml(_currentUser.display_name)}</span>
-                    ${_currentUser.is_admin ? '<span style="font-size:0.7rem;color:var(--ro-gold);font-weight:600;">ADMIN</span>' : ''}
-                </div>
-                <a href="/auth/logout" class="btn-logout">Sign Out</a>
-            `;
-        } else {
-            bar.innerHTML = `<a href="/auth/login" class="btn-google">Sign in with Google</a>`;
-        }
     }
 
     function getThreadId() {

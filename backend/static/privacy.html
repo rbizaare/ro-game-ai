@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — RO PH Community Hub</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta name="description" content="Privacy policy for the RO PH Community Hub.">
+    <meta property="og:title" content="Privacy Policy — RO PH Community Hub">
+    <meta property="og:description" content="Privacy policy for the RO PH Community Hub.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RO PH Community Hub">
+    <meta name="twitter:card" content="summary">
+    <meta name="theme-color" content="#3a1f04">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/utils.js"></script>
+    <script src="/static/darkmode.js"></script>
+    <script src="/static/auth-ui.js" defer></script>
+    <style>
+        .privacy-page {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .privacy-page h1 {
+            font-family: 'Cinzel', serif;
+            color: var(--ro-brown);
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        [data-theme="dark"] .privacy-page h1 {
+            color: var(--ro-gold-bright);
+        }
+        .privacy-page h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--ro-brown);
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        [data-theme="dark"] .privacy-page h2 {
+            color: var(--ro-gold);
+        }
+        .privacy-page p, .privacy-page li {
+            color: var(--ro-text-light);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+        .privacy-page ul {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        .privacy-page li {
+            margin-bottom: 0.3rem;
+        }
+        .privacy-page .last-updated {
+            font-size: 0.85rem;
+            color: var(--ro-text-light);
+            opacity: 0.7;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">RO PH Hub</a>
+        <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+        <ul class="nav-links">
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/streamers">Streamers</a></li>
+            <li><a href="/servers">Servers</a></li>
+            <li><a href="/forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <div class="privacy-page">
+        <h1>Privacy Policy</h1>
+        <p class="last-updated">Last updated: March 9, 2026</p>
+
+        <h2>What We Collect</h2>
+        <p>When you sign in with Google, we receive and store:</p>
+        <ul>
+            <li>Your Google display name</li>
+            <li>Your email address</li>
+            <li>Your Google profile picture URL</li>
+        </ul>
+        <p>We do not store your Google password or access any other Google data.</p>
+
+        <h2>How We Use Your Data</h2>
+        <ul>
+            <li>Display your name and avatar in the forum, shoutbox, and profile pages</li>
+            <li>Identify your account for posting threads, replies, and chat messages</li>
+            <li>Send you in-app notifications when someone replies to your threads</li>
+        </ul>
+
+        <h2>Chat Assistant</h2>
+        <p>Questions asked to the RO Game Database Assistant are logged anonymously to improve response accuracy. No personally identifiable information is attached to these logs.</p>
+
+        <h2>Cookies</h2>
+        <p>We use a single signed session cookie (<code>forum_session</code>) to keep you logged in. It expires after 7 days. We also store your dark mode preference in <code>localStorage</code>.</p>
+
+        <h2>Third-Party Services</h2>
+        <ul>
+            <li><strong>Google OAuth</strong> — for authentication only</li>
+            <li><strong>Twitch &amp; YouTube APIs</strong> — to display streamer information (no user data is sent)</li>
+        </ul>
+
+        <h2>Data Retention</h2>
+        <p>Your account data is retained as long as your account is active. Forum posts and shoutbox messages are retained indefinitely. You may request deletion of your account and associated data by contacting us.</p>
+
+        <h2>Contact</h2>
+        <p>For privacy concerns or data deletion requests, reach out through the <a href="/forum">community forum</a> or the <a href="/chat">chat assistant</a>.</p>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/forum">Forum</a>
+            <a href="/streamers">Streamers</a>
+            <a href="/servers">Servers</a>
+            <a href="/privacy">Privacy Policy</a>
+        </div>
+        <p>RO PH Community Hub &mdash; A fan-made project for the Filipino RO community. Not affiliated with Gravity Co., Ltd.</p>
+        <p>Ragnarok Online &copy; Gravity Co., Ltd. &amp; Lee Myoungjin.</p>
+    </footer>
+
+    <script src="/static/emotes.js"></script>
+    <script src="/static/shoutbox.js"></script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import html as html_mod
 import os
 import re
 import sys
@@ -13,9 +14,9 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, HTMLResponse
 from fastapi.exceptions import HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from ai_helper import get_top_monsters_by_exp, ask_ai_hybrid, detect_intent
 from chat_logger import log_chat, get_logs as get_chat_logs
 from auth import auth_router
@@ -103,6 +104,7 @@ _SITEMAP_TXT = """/
 /streamers
 /servers
 /forum
+/privacy
 """
 
 @app.get("/sitemap.txt")
@@ -130,6 +132,11 @@ def servers_page():
     return FileResponse(os.path.join(BASE_DIR, "static", "servers-page.html"))
 
 
+@app.get("/privacy")
+def privacy_page():
+    return FileResponse(os.path.join(BASE_DIR, "static", "privacy.html"))
+
+
 @app.get("/forum")
 def forum_page():
     return FileResponse(os.path.join(BASE_DIR, "static", "forum.html"))
@@ -137,7 +144,37 @@ def forum_page():
 
 @app.get("/forum/thread/{thread_id}")
 def thread_page(thread_id: int):
-    return FileResponse(os.path.join(BASE_DIR, "static", "thread.html"))
+    from forum_db import get_thread
+    thread = get_thread(thread_id)
+
+    template_path = os.path.join(BASE_DIR, "static", "thread.html")
+    if not thread:
+        return FileResponse(template_path)
+
+    # Build dynamic OG tags (escape all user content)
+    title = html_mod.escape(thread["title"])
+    author = html_mod.escape(thread.get("author_name", ""))
+    body_preview = html_mod.escape((thread["body"] or "")[:200])
+    og_desc = f"by {author} — {body_preview}" if author else body_preview
+
+    with open(template_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # Replace generic meta tags with dynamic ones
+    html = html.replace(
+        "<title>Thread — RO PH Community Hub</title>",
+        f"<title>{title} — RO PH Community Hub</title>",
+    )
+    html = html.replace(
+        'content="Forum discussion on the RO PH Community Hub."',
+        f'content="{og_desc}"',
+    )
+    html = html.replace(
+        'content="Thread — RO PH Community Hub"',
+        f'content="{title} — RO PH Community Hub"',
+    )
+
+    return HTMLResponse(html)
 
 
 @app.get("/forum/profile/{user_id}")
@@ -191,7 +228,7 @@ def search_by_race(race: str):
 
 
 class ChatRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1, max_length=2000)
 
 
 @app.post("/chat")
