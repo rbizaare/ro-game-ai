@@ -159,8 +159,10 @@ def auth_callback(request: Request, code: str = "", state: str = "", error: str 
 
 
 @auth_router.get("/auth/logout")
-def auth_logout():
-    response = RedirectResponse(url="/forum")
+def auth_logout(redirect_to: str = "/"):
+    if not redirect_to.startswith("/"):
+        redirect_to = "/"
+    response = RedirectResponse(url=redirect_to)
     response.delete_cookie("forum_session", path="/")
     return response
 

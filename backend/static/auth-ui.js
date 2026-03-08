@@ -71,7 +71,7 @@
                     avatarHtml +
                     '<span class="nav-auth-name">' + escapeHtml(currentUser.display_name) + '</span>' +
                 '</a>' +
-                '<a href="/auth/logout" class="nav-auth-logout" title="Sign Out">Sign Out</a>';
+                '<a href="/auth/logout?redirect_to=' + encodeURIComponent(location.pathname) + '" class="nav-auth-logout" title="Sign Out">Sign Out</a>';
         } else {
             el.innerHTML = '<button class="nav-auth-login" id="navLoginBtn">Sign In</button>';
         }

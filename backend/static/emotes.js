@@ -10,7 +10,6 @@ var RO_EMOTES = [
     { cmd: '/an',   file: 'Ang.gif',    name: 'Angry' },
     { cmd: '/ag',   file: 'Agh.gif',    name: 'Frustrated' },
     { cmd: '/$',    file: 'Money.gif',  name: 'Money' },
-    { cmd: '/...',  file: 'Dots.gif',   name: 'Dots' },
     { cmd: '/thx',  file: 'Thx.gif',    name: 'Thanks' },
     { cmd: '/wah',  file: 'Wah.gif',    name: 'Crying' },
     { cmd: '/sry',  file: 'Sry.gif',    name: 'Sorry' },
