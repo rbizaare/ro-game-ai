@@ -309,11 +309,10 @@ def _fetch_twitch_streams() -> list:
 
 
 def _fetch_youtube_streams() -> list:
-    """Fetch live streams from YouTube using RSS + Videos API (quota-efficient).
+    """Fetch currently-live YouTube streams using PlaylistItems + Videos API.
 
-    Instead of the Search API (100 units/call), this uses:
-    1. RSS feed (free) to get recent video IDs
-    2. Videos API (1 unit) to check which are currently live
+    Uses the channel's uploads playlist (UC->UU) to get recent video IDs,
+    then Videos API to check which are currently live.
     """
     if not YOUTUBE_API_KEY or not YOUTUBE_CHANNELS:
         return []
@@ -322,29 +321,30 @@ def _fetch_youtube_streams() -> list:
     video_ids = []
     channel_map: dict = {}  # video_id -> (channel_id, handle)
 
-    with httpx.Client(timeout=10) as client:
-        # Step 1: Fetch RSS feeds (free, no quota)
+    with httpx.Client(timeout=15) as client:
+        # Step 1: Get recent video IDs via PlaylistItems API (uploads playlist)
         for entry in YOUTUBE_CHANNELS:
             parts = entry.split(":", 1)
             channel_id = parts[0]
             handle = parts[1] if len(parts) > 1 else channel_id
+            uploads_playlist = channel_id.replace("UC", "UU", 1)
 
             try:
-                rss_resp = client.get(
-                    f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+                pl_resp = client.get(
+                    "https://www.googleapis.com/youtube/v3/playlistItems",
+                    params={
+                        "part": "snippet",
+                        "playlistId": uploads_playlist,
+                        "maxResults": 5,
+                        "key": YOUTUBE_API_KEY,
+                    },
                 )
-                if rss_resp.status_code != 200:
+                if pl_resp.status_code != 200:
                     continue
-
-                root = ET.fromstring(rss_resp.text)
-                ns = {"yt": "http://www.youtube.com/xml/schemas/2015",
-                      "atom": "http://www.w3.org/2005/Atom"}
-
-                for vid_entry in root.findall("atom:entry", ns)[:5]:
-                    vid_id_el = vid_entry.find("yt:videoId", ns)
-                    if vid_id_el is not None and vid_id_el.text:
-                        video_ids.append(vid_id_el.text)
-                        channel_map[vid_id_el.text] = (channel_id, handle)
+                for item in pl_resp.json().get("items", []):
+                    vid_id = item["snippet"]["resourceId"]["videoId"]
+                    video_ids.append(vid_id)
+                    channel_map[vid_id] = (channel_id, handle)
             except Exception:
                 continue
 
@@ -479,16 +479,18 @@ def _parse_yt_duration(duration: str) -> float:
 
 
 def _fetch_youtube_channel_stats(started_after: str) -> list:
-    """Fetch monthly VOD stats for YouTube channels via RSS + Videos API.
+    """Fetch monthly live stream stats for YouTube channels.
 
-    Uses RSS (free) to get recent video IDs, then Videos API (1 unit per batch)
-    to get durations, view counts, and publish dates. Filters to current month.
+    Uses PlaylistItems API (uploads playlist) to get recent video IDs,
+    then Videos API to get durations, view counts, and live stream details.
+    Only counts actual live streams to keep it fair with Twitch.
     """
     if not YOUTUBE_API_KEY or not YOUTUBE_CHANNELS:
+        print("[leaderboard] YouTube skipped: missing API key or channels config")
         return []
 
     results = []
-    with httpx.Client(timeout=10) as client:
+    with httpx.Client(timeout=15) as client:
         for entry in YOUTUBE_CHANNELS:
             parts = entry.split(":", 1)
             channel_id = parts[0]
@@ -515,22 +517,24 @@ def _fetch_youtube_channel_stats(started_after: str) -> list:
             snippet = ch_item.get("snippet", {})
             ch_stats = ch_item.get("statistics", {})
 
-            # Step 2: RSS feed for recent video IDs (free)
+            # Step 2: Uploads playlist for recent video IDs (UC -> UU)
+            uploads_playlist = channel_id.replace("UC", "UU", 1)
             video_ids = []
             try:
-                rss_resp = client.get(
-                    f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+                pl_resp = client.get(
+                    "https://www.googleapis.com/youtube/v3/playlistItems",
+                    params={
+                        "part": "snippet",
+                        "playlistId": uploads_playlist,
+                        "maxResults": 25,
+                        "key": YOUTUBE_API_KEY,
+                    },
                 )
-                if rss_resp.status_code == 200:
-                    root = ET.fromstring(rss_resp.text)
-                    ns = {"yt": "http://www.youtube.com/xml/schemas/2015",
-                          "atom": "http://www.w3.org/2005/Atom"}
-                    for vid_entry in root.findall("atom:entry", ns)[:15]:
-                        vid_id_el = vid_entry.find("yt:videoId", ns)
-                        if vid_id_el is not None and vid_id_el.text:
-                            video_ids.append(vid_id_el.text)
+                if pl_resp.status_code == 200:
+                    for item in pl_resp.json().get("items", []):
+                        video_ids.append(item["snippet"]["resourceId"]["videoId"])
             except Exception as e:
-                print(f"[leaderboard] YouTube RSS error for {handle}: {e}")
+                print(f"[leaderboard] YouTube PlaylistItems error for {handle}: {e}")
 
             # Step 3: Videos API for durations + views (1 unit per batch of 50)
             streams = 0
@@ -561,6 +565,8 @@ def _fetch_youtube_channel_stats(started_after: str) -> list:
                         total_views += views
                 else:
                     print(f"[leaderboard] YouTube videos API error {vid_resp.status_code}: {vid_data}")
+
+            print(f"[leaderboard] YouTube {handle}: {len(video_ids)} videos, {streams} live streams, {round(total_hours, 1)}h")
 
             results.append({
                 "login": handle,
