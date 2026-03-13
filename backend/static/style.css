@@ -1447,6 +1447,10 @@ body {
     color: var(--ro-gold);
 }
 
+[data-theme="dark"] .stream-name {
+    color: var(--ro-text);
+}
+
 /* ===== TOAST NOTIFICATIONS ===== */
 .toast-container {
     position: fixed;
